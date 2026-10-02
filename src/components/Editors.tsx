@@ -6,6 +6,7 @@ import type { Lesson, Student } from '@/db/schema';
 import { STUDENT_COLOR_NAMES } from '@/lib/lessons';
 import LessonDialog, { type LessonDefaults } from './LessonDialog';
 import StudentDialog from './StudentDialog';
+import PaymentDialog, { type PaymentDefaults } from './PaymentDialog';
 
 export type Prefs = {
   currency: string;
@@ -21,6 +22,7 @@ type EditorsApi = {
   editLesson: (lesson: Lesson) => void;
   newStudent: () => void;
   editStudent: (student: Student) => void;
+  newPayment: (defaults?: PaymentDefaults) => void;
 };
 
 const EditorsContext = createContext<EditorsApi | null>(null);
@@ -49,16 +51,18 @@ export function EditorsProvider({
     null,
   );
   const [studentState, setStudentState] = useState<{ key: number; student?: Student } | null>(null);
+  const [paymentState, setPaymentState] = useState<{ key: number; defaults?: PaymentDefaults } | null>(null);
 
   const newLesson = useCallback((defaults?: LessonDefaults) => setLessonState({ key: Date.now(), defaults }), []);
   const editLesson = useCallback((lesson: Lesson) => setLessonState({ key: Date.now(), lesson }), []);
   const newStudent = useCallback(() => setStudentState({ key: Date.now() }), []);
   const editStudent = useCallback((student: Student) => setStudentState({ key: Date.now(), student }), []);
+  const newPayment = useCallback((defaults?: PaymentDefaults) => setPaymentState({ key: Date.now(), defaults }), []);
 
   const saved = useCallback(() => router.refresh(), [router]);
 
   return (
-    <EditorsContext.Provider value={{ prefs, students, newLesson, editLesson, newStudent, editStudent }}>
+    <EditorsContext.Provider value={{ prefs, students, newLesson, editLesson, newStudent, editStudent, newPayment }}>
       {children}
       {lessonState && (
         <LessonDialog
@@ -82,6 +86,16 @@ export function EditorsProvider({
           prefs={prefs}
           suggestedColor={STUDENT_COLOR_NAMES[students.length % STUDENT_COLOR_NAMES.length]}
           onClose={() => setStudentState(null)}
+          onSaved={saved}
+        />
+      )}
+      {paymentState && (
+        <PaymentDialog
+          key={paymentState.key}
+          defaults={paymentState.defaults}
+          students={students}
+          prefs={prefs}
+          onClose={() => setPaymentState(null)}
           onSaved={saved}
         />
       )}

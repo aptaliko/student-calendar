@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Plus, UserPlus, Wallet } from 'lucide-react';
+import { HandCoins, Pencil, Plus, UserPlus, Wallet } from 'lucide-react';
 import type { Student } from '@/db/schema';
 import { api } from '@/lib/api';
 import { formatMoney } from '@/lib/money';
 import type { LessonDefaults } from './LessonDialog';
+import type { PaymentDefaults } from './PaymentDialog';
 import { useEditors } from './Editors';
 import { useToast } from './Toast';
 
@@ -32,6 +33,25 @@ export function NewStudentButton({ className = 'btn btn-primary', label = 'Πρ�
   return (
     <button className={className} onClick={newStudent}>
       <UserPlus className="size-4" /> {label}
+    </button>
+  );
+}
+
+export function RecordPaymentButton({
+  defaults,
+  className = 'btn btn-success',
+  label = 'Καταχώριση πληρωμής',
+  iconOnly = false,
+}: {
+  defaults?: PaymentDefaults;
+  className?: string;
+  label?: string;
+  iconOnly?: boolean;
+}) {
+  const { newPayment } = useEditors();
+  return (
+    <button className={className} onClick={() => newPayment(defaults)} aria-label={label} title={label}>
+      <HandCoins className="size-4" /> {!iconOnly && label}
     </button>
   );
 }

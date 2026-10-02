@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LESSON_STATUSES } from '@/db/schema';
+import { LESSON_STATUSES, PAYMENT_METHODS } from '@/db/schema';
 import { STUDENT_COLOR_NAMES } from './lessons';
 import { CURRENCIES } from './money';
 import { isValidISODate } from './dates';
@@ -43,6 +43,15 @@ export const lessonCreateSchema = lessonSchema.extend({
 });
 
 export const lessonPatchSchema = lessonSchema.partial();
+
+export const paymentSchema = z.object({
+  studentId: z.number().int().positive(),
+  date: isoDate,
+  amountCents: cents.refine((v) => v > 0, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
+  method: z.enum(PAYMENT_METHODS).default('cash'),
+  notes: optionalText,
+  lessonIds: z.array(z.number().int().positive()).min(1, 'Επιλέξτε τουλάχιστον ένα μάθημα').max(500),
+});
 
 export const accountSchema = z.object({
   name: z.string().trim().max(120).optional(),

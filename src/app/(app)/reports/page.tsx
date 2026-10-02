@@ -1,5 +1,9 @@
 import Link from 'next/link';
 import { BarChart3, ChevronLeft, ChevronRight, Clock3, Coins, Download, HandCoins, Percent, TrendingUp, Wallet } from 'lucide-react';
+import { listPayments } from '@/db/queries/payments';
+import { RecordPaymentButton } from '@/components/Actions';
+import PaymentsList from '@/components/PaymentsList';
+import { collectedCents } from '@/lib/payments';
 import { listLessons } from '@/db/queries/lessons';
 import { listStudents } from '@/db/queries/students';
 import Avatar from '@/components/Avatar';
@@ -23,9 +27,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   const from = period === 'month' ? startOfMonth(date) : startOfYear(date);
   const to = period === 'month' ? endOfMonth(date) : endOfYear(date);
-  const [students, yearLessons] = await Promise.all([
+  const [students, yearLessons, periodPayments] = await Promise.all([
     listStudents(user.id),
     listLessons(user.id, { from: startOfYear(date), to: endOfYear(date) }),
+    listPayments(user.id, { from, to }),
   ]);
   const lessons = yearLessons.filter((l) => l.date >= from && l.date <= to);
 
@@ -38,6 +43,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     lessons: mt.attended + mt.noShow,
   }));
   const byId = new Map(students.map((s) => [s.id, s]));
+  const collected = collectedCents(periodPayments, lessons);
   const perHour = t.attendedMinutes > 0 ? Math.round((t.earnedCents / t.attendedMinutes) * 60) : 0;
 
   const prev = period === 'month' ? addMonths(date, -1) : `${year - 1}-01-01`;
@@ -56,6 +62,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   return (
     <div className="animate-rise space-y-6">
       <PageHeader title="Αναφορές" subtitle="Ώρες, παρουσίες και έσοδα με μια ματιά.">
+        <RecordPaymentButton defaults={{ from, to }} className="btn btn-success btn-sm" />
         <a href={`/api/reports/export?from=${from}&to=${to}`} className="btn btn-ghost btn-sm" download>
           <Download className="size-4" /> Εξαγωγή σε Excel
         </a>
@@ -86,7 +93,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatTile icon={Clock3} label="Ώρες διδασκαλίας" value={formatHours(t.attendedMinutes)} hint={`${t.attended} μαθήματα με παρουσία`} />
         <StatTile icon={Coins} tone="secondary" label="Έσοδα" value={formatMoney(t.earnedCents, user.currency, { compact: true })} hint={`μαζί με ${t.noShow} χρεωμένες απουσίες`} />
-        <StatTile icon={HandCoins} tone="success" label="Εισπράχθηκαν" value={formatMoney(t.paidCents, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} σε εκκρεμότητα`} />
+        <StatTile icon={HandCoins} tone="success" label="Εισπράχθηκαν" value={formatMoney(collected, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} σε εκκρεμότητα`} />
         <StatTile icon={TrendingUp} tone="accent" label="Πραγματική χρέωση" value={perHour ? `${formatMoney(perHour, user.currency, { compact: true })}/ώρα` : '—'} hint={t.upcomingCents ? `${formatMoney(t.upcomingCents, user.currency)} ακόμη προγραμματισμένα` : 'ανά ώρα διδασκαλίας'} />
       </div>
 
@@ -140,6 +147,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                   <th className="text-right">Έσοδα</th>
                   <th className="hidden text-right md:table-cell">Πληρωμένα</th>
                   <th className="text-right">Οφειλή</th>
+                  <th className="w-10" />
                 </tr>
               </thead>
               <tbody className="tabular">
@@ -163,6 +171,16 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                       <td className={`text-right ${st.outstandingCents ? 'font-semibold text-warning' : 'text-base-content/40'}`}>
                         {formatMoney(st.outstandingCents, user.currency)}
                       </td>
+                      <td className="text-right">
+                        {st.outstandingCents > 0 && (
+                          <RecordPaymentButton
+                            defaults={{ studentId: id, from, to }}
+                            className="btn btn-success btn-soft btn-xs btn-square"
+                            label="Καταχώριση πληρωμής"
+                            iconOnly
+                          />
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -178,11 +196,26 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                   <th className="text-right">{formatMoney(t.earnedCents, user.currency)}</th>
                   <th className="hidden text-right md:table-cell">{formatMoney(t.paidCents, user.currency)}</th>
                   <th className="text-right">{formatMoney(t.outstandingCents, user.currency)}</th>
+                  <th />
                 </tr>
               </tfoot>
             </table>
           </div>
         )}
+      </Card>
+      <Card
+        title={
+          <span className="flex items-center gap-2">
+            <HandCoins className="size-5 text-success" /> Πληρωμές ({label})
+          </span>
+        }
+        action={
+          <span className="text-sm font-semibold text-success tabular">
+            {formatMoney(periodPayments.reduce((s, p) => s + p.amountCents, 0), user.currency)}
+          </span>
+        }
+      >
+        <PaymentsList payments={periodPayments} />
       </Card>
     </div>
   );

@@ -1,14 +1,16 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, CalendarClock, Clock3, Coins, History, Mail, Percent, Phone, Wallet } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Clock3, Coins, HandCoins, History, Mail, Percent, Phone, Wallet } from 'lucide-react';
 import { listStudentLessons } from '@/db/queries/lessons';
+import { listPayments } from '@/db/queries/payments';
+import PaymentsList from '@/components/PaymentsList';
 import { getStudent } from '@/db/queries/students';
 import Avatar from '@/components/Avatar';
 import Card, { EmptyState } from '@/components/Card';
 import LessonRow from '@/components/LessonRow';
 import StatTile from '@/components/StatTile';
 import StudentMenu from '@/components/StudentMenu';
-import { EditStudentButton, NewLessonButton, SettleButton } from '@/components/Actions';
+import { EditStudentButton, NewLessonButton, RecordPaymentButton, SettleButton } from '@/components/Actions';
 import { monthLabel, todayIn } from '@/lib/dates';
 import { formatHours, formatMoney } from '@/lib/money';
 import { totals } from '@/lib/reports';
@@ -20,7 +22,10 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   if (!student) notFound();
 
   const today = todayIn(user.timezone);
-  const lessons = await listStudentLessons(user.id, student.id); // newest first
+  const [lessons, studentPayments] = await Promise.all([
+    listStudentLessons(user.id, student.id), // newest first
+    listPayments(user.id, { studentId: student.id }),
+  ]);
   const t = totals(lessons);
   const upcoming = lessons.filter((l) => l.date >= today && l.status === 'scheduled').reverse();
   const past = lessons.filter((l) => !(l.date >= today && l.status === 'scheduled'));
@@ -85,7 +90,10 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
           <span>
             Εκκρεμεί οφειλή <b>{formatMoney(t.outstandingCents, user.currency)}</b> ({student.name}).
           </span>
-          <SettleButton studentId={student.id} amountCents={t.outstandingCents} className="btn btn-sm btn-warning" />
+          <div className="flex gap-2">
+            <RecordPaymentButton defaults={{ studentId: student.id }} className="btn btn-sm btn-success" label="Πληρωμή" />
+            <SettleButton studentId={student.id} amountCents={t.outstandingCents} className="btn btn-sm btn-warning" />
+          </div>
         </div>
       )}
 
@@ -130,6 +138,16 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
           )}
         </Card>
       </div>
+      <Card
+        title={
+          <span className="flex items-center gap-2">
+            <HandCoins className="size-5 text-success" /> Πληρωμές
+          </span>
+        }
+        action={<RecordPaymentButton defaults={{ studentId: student.id }} className="btn btn-ghost btn-sm" label="Νέα πληρωμή" />}
+      >
+        <PaymentsList payments={studentPayments} showStudent={false} />
+      </Card>
     </div>
   );
 }

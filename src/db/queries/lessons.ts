@@ -5,11 +5,11 @@ import { lessons, type Lesson, type LessonStatus } from '../schema';
 export type LessonInput = Pick<
   Lesson,
   'studentId' | 'date' | 'startTime' | 'durationMinutes' | 'priceCents' | 'topic' | 'notes'
-> & { status?: LessonStatus; paid?: boolean; seriesId?: string | null };
+> & { status?: LessonStatus; paid?: boolean; seriesId?: string | null; paymentId?: number | null };
 
 export async function listLessons(
   ownerId: number,
-  opts: { from?: string; to?: string; studentId?: number; status?: LessonStatus[]; before?: string } = {},
+  opts: { from?: string; to?: string; studentId?: number; status?: LessonStatus[]; before?: string; paid?: boolean } = {},
 ): Promise<Lesson[]> {
   const where: SQL[] = [eq(lessons.ownerId, ownerId)];
   if (opts.from) where.push(gte(lessons.date, opts.from));
@@ -17,6 +17,7 @@ export async function listLessons(
   if (opts.before) where.push(lt(lessons.date, opts.before));
   if (opts.studentId) where.push(eq(lessons.studentId, opts.studentId));
   if (opts.status) where.push(inArray(lessons.status, opts.status));
+  if (opts.paid !== undefined) where.push(eq(lessons.paid, opts.paid));
   return db
     .select()
     .from(lessons)
@@ -70,22 +71,5 @@ export async function deleteLesson(ownerId: number, id: number, series?: 'future
       ? and(eq(lessons.ownerId, ownerId), eq(lessons.seriesId, lesson.seriesId), gte(lessons.date, lesson.date))
       : and(eq(lessons.ownerId, ownerId), eq(lessons.id, id));
   const rows = await db.delete(lessons).where(where).returning({ id: lessons.id });
-  return rows.length;
-}
-
-/** Marks every charged, unpaid lesson of a student as paid. */
-export async function settleStudent(ownerId: number, studentId: number): Promise<number> {
-  const rows = await db
-    .update(lessons)
-    .set({ paid: true })
-    .where(
-      and(
-        eq(lessons.ownerId, ownerId),
-        eq(lessons.studentId, studentId),
-        eq(lessons.paid, false),
-        inArray(lessons.status, ['attended', 'no_show']),
-      ),
-    )
-    .returning({ id: lessons.id });
   return rows.length;
 }

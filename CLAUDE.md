@@ -18,6 +18,11 @@ HMAC-signed cookie auth, vitest.
 - `priceCents` is a snapshot per lesson, so changing a student's rate never rewrites history.
 - Status semantics (`src/lib/lessons.ts`): `attended` and `no_show` are charged; `excused`,
   `cancelled` and `scheduled` are not. All report math is in `src/lib/reports.ts` (unit tested).
+- Payments (`payments` table, `src/db/queries/payments.ts`) cover one or more lessons via
+  `lessons.paymentId`; recording one marks its lessons `paid`, deleting it un-marks them. The
+  amount may differ from the lessons' sum (discount). "Owed" is lesson-based; "collected" in
+  reports is cash-based: payments dated in the period + lessons ticked paid by hand
+  (`collectedCents` in `src/lib/payments.ts`). "Settle" creates a payment for the full balance.
 - Every query is scoped by `ownerId`. `src/proxy.ts` verifies the session cookie and sets
   `x-user-id` for route handlers (`getUserId`); server components use `requireUser()`.
 - The UI is Greek only (`<html lang="el">`); strings live inline in the components, like in
