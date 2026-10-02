@@ -1,0 +1,38 @@
+# Local development backing stack, started by `npm run dev:up`:
+#   - postgres:   the actual local database (data lives in the named volume below)
+#   - neon-proxy: a neon-http proxy so the app keeps using the SAME driver as production
+#                 (drizzle-orm/neon-http) instead of swapping to `pg` only on your machine.
+#
+# Nothing here runs in production — prod is Neon's cloud, hit over neon-http directly.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: student-calendar-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: student_calendar
+    ports:
+      - '5432:5432'
+    volumes:
+      - student-calendar-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d student_calendar']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  neon-proxy:
+    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+    container_name: student-calendar-neon-proxy
+    environment:
+      PG_CONNECTION_STRING: postgres://postgres:postgres@postgres:5432/student_calendar
+    ports:
+      - '4444:4444'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  student-calendar-pgdata:

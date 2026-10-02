@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { listLessons } from '@/db/queries/lessons';
+import { listStudents } from '@/db/queries/students';
+import { isValidISODate } from '@/lib/dates';
+import { STATUS_META } from '@/lib/lessons';
+import { toCsv } from '@/lib/reports';
+import { getUserId } from '@/lib/session';
+
+/** CSV of every lesson in [from, to] — opens straight in Excel / Numbers / Sheets. */
+export async function GET(request: NextRequest) {
+  const userId = getUserId(request);
+  const from = request.nextUrl.searchParams.get('from') ?? '';
+  const to = request.nextUrl.searchParams.get('to') ?? '';
+  if (!isValidISODate(from) || !isValidISODate(to)) {
+    return NextResponse.json({ error: 'from/to must be YYYY-MM-DD' }, { status: 400 });
+  }
+
+  const [lessons, students] = await Promise.all([listLessons(userId, { from, to }), listStudents(userId)]);
+  const names = new Map(students.map((s) => [s.id, s.name]));
+  const csv = toCsv([
+    ['Date', 'Start', 'Minutes', 'Student', 'Status', 'Price', 'Paid', 'Topic', 'Notes'],
+    ...lessons.map((l) => [
+      l.date,
+      l.startTime,
+      l.durationMinutes,
+      names.get(l.studentId) ?? '',
+      STATUS_META[l.status].label,
+      (l.priceCents / 100).toFixed(2),
+      l.paid ? 'yes' : 'no',
+      l.topic ?? '',
+      l.notes ?? '',
+    ]),
+  ]);
+
+  return new NextResponse(csv, {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="lessons_${from}_${to}.csv"`,
+    },
+  });
+}

@@ -1,0 +1,123 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: false;
+}
+
+/* Two hand-tuned themes: "studio" (light, default) and "studio-night" (dark, follows the OS). */
+@plugin "daisyui/theme" {
+  name: "studio";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f6f5fb;
+  --color-base-300: #eae8f3;
+  --color-base-content: #1e1b2e;
+  --color-primary: #7c3aed;
+  --color-primary-content: #ffffff;
+  --color-secondary: #ec4899;
+  --color-secondary-content: #ffffff;
+  --color-accent: #06b6d4;
+  --color-accent-content: #ffffff;
+  --color-neutral: #2a2540;
+  --color-neutral-content: #f4f3fa;
+  --color-info: #0ea5e9;
+  --color-info-content: #ffffff;
+  --color-success: #10b981;
+  --color-success-content: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #2e1e02;
+  --color-error: #f43f5e;
+  --color-error-content: #ffffff;
+  --radius-selector: 1rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "studio-night";
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: #17151f;
+  --color-base-200: #100e17;
+  --color-base-300: #24212f;
+  --color-base-content: #ebe9f5;
+  --color-primary: #a78bfa;
+  --color-primary-content: #1a0b3d;
+  --color-secondary: #f472b6;
+  --color-secondary-content: #3b0820;
+  --color-accent: #22d3ee;
+  --color-accent-content: #042f37;
+  --color-neutral: #2a2638;
+  --color-neutral-content: #ebe9f5;
+  --color-info: #38bdf8;
+  --color-info-content: #06202e;
+  --color-success: #34d399;
+  --color-success-content: #052e21;
+  --color-warning: #fbbf24;
+  --color-warning-content: #2e1e02;
+  --color-error: #fb7185;
+  --color-error-content: #3b0710;
+  --radius-selector: 1rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme inline {
+  --font-sans: var(--font-jakarta);
+}
+
+body {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  background: var(--color-base-200);
+}
+
+@utility brand-gradient {
+  background-image: linear-gradient(135deg, #7c3aed 0%, #c026d3 55%, #ec4899 100%);
+}
+
+@utility brand-text {
+  background-image: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility card-surface {
+  background: var(--color-base-100);
+  border: 1px solid color-mix(in oklab, var(--color-base-content) 7%, transparent);
+  border-radius: var(--radius-box);
+  box-shadow: 0 1px 2px rgb(20 10 50 / 0.04), 0 8px 24px -12px rgb(60 30 120 / 0.12);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-rise {
+  animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise {
+    animation: none;
+  }
+}
