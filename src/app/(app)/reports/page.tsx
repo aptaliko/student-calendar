@@ -3,7 +3,6 @@ import { BarChart3, ChevronLeft, ChevronRight, Clock3, Coins, Download, HandCoin
 import { listPayments } from '@/db/queries/payments';
 import { RecordPaymentButton } from '@/components/Actions';
 import PaymentsList from '@/components/PaymentsList';
-import { collectedCents } from '@/lib/payments';
 import { listLessons } from '@/db/queries/lessons';
 import { listStudents } from '@/db/queries/students';
 import Avatar from '@/components/Avatar';
@@ -43,7 +42,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     lessons: mt.attended + mt.noShow,
   }));
   const byId = new Map(students.map((s) => [s.id, s]));
-  const collected = collectedCents(periodPayments, lessons);
   const perHour = t.attendedMinutes > 0 ? Math.round((t.earnedCents / t.attendedMinutes) * 60) : 0;
 
   const prev = period === 'month' ? addMonths(date, -1) : `${year - 1}-01-01`;
@@ -93,7 +91,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatTile icon={Clock3} label="Ώρες διδασκαλίας" value={formatHours(t.attendedMinutes)} hint={`${t.attended} μαθήματα με παρουσία`} />
         <StatTile icon={Coins} tone="secondary" label="Έσοδα" value={formatMoney(t.earnedCents, user.currency, { compact: true })} hint={`μαζί με ${t.noShow} χρεωμένες απουσίες`} />
-        <StatTile icon={HandCoins} tone="success" label="Εισπράχθηκαν" value={formatMoney(collected, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} σε εκκρεμότητα`} />
+        <StatTile icon={HandCoins} tone="success" label="Εισπράχθηκαν" value={formatMoney(t.paidCents, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} σε εκκρεμότητα`} />
         <StatTile icon={TrendingUp} tone="accent" label="Πραγματική χρέωση" value={perHour ? `${formatMoney(perHour, user.currency, { compact: true })}/ώρα` : '—'} hint={t.upcomingCents ? `${formatMoney(t.upcomingCents, user.currency)} ακόμη προγραμματισμένα` : 'ανά ώρα διδασκαλίας'} />
       </div>
 
@@ -206,12 +204,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <Card
         title={
           <span className="flex items-center gap-2">
-            <HandCoins className="size-5 text-success" /> Πληρωμές ({label})
-          </span>
-        }
-        action={
-          <span className="text-sm font-semibold text-success tabular">
-            {formatMoney(periodPayments.reduce((s, p) => s + p.amountCents, 0), user.currency)}
+            <HandCoins className="size-5 text-success" /> Πληρωμές για μαθήματα: {label}
           </span>
         }
       >

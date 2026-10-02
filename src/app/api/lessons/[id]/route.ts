@@ -14,8 +14,8 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   if (parsed.data.studentId && !(await getStudent(userId, parsed.data.studentId))) {
     return NextResponse.json({ error: 'Ο μαθητής δεν βρέθηκε' }, { status: 404 });
   }
-  // Unmarking a lesson as paid detaches it from whatever payment covered it.
-  const data = parsed.data.paid === false ? { ...parsed.data, paymentId: null } : parsed.data;
+  // Toggling paid by hand detaches the lesson from any payment; its full price then counts.
+  const data = parsed.data.paid !== undefined ? { ...parsed.data, paymentId: null, paidCents: null } : parsed.data;
   const lesson = await updateLesson(userId, id, data);
   if (!lesson) return NextResponse.json({ error: 'Δεν βρέθηκε' }, { status: 404 });
   return NextResponse.json(lesson);

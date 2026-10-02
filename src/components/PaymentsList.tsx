@@ -5,13 +5,19 @@ import { useRouter } from 'next/navigation';
 import { HandCoins, Trash2 } from 'lucide-react';
 import type { PaymentWithCount } from '@/db/queries/payments';
 import { api } from '@/lib/api';
-import { shortDay } from '@/lib/dates';
+import { dayMonth } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import { PAYMENT_METHOD_LABELS } from '@/lib/payments';
 import Avatar from './Avatar';
 import { EmptyState } from './Card';
 import { useEditors } from './Editors';
 import { useToast } from './Toast';
+
+/** '3 Σεπ – 24 Σεπ' — the lessons a payment covers. */
+function coverage(p: PaymentWithCount): string {
+  if (!p.firstDate || !p.lastDate) return '';
+  return p.firstDate === p.lastDate ? dayMonth(p.firstDate) : `${dayMonth(p.firstDate)} – ${dayMonth(p.lastDate)}`;
+}
 
 export default function PaymentsList({ payments, showStudent = true }: { payments: PaymentWithCount[]; showStudent?: boolean }) {
   const { students, prefs } = useEditors();
@@ -54,11 +60,11 @@ export default function PaymentsList({ payments, showStudent = true }: { payment
             )}
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">
-                {showStudent ? (s?.name ?? 'Διαγραμμένος') : shortDay(p.date)}
+                {showStudent ? (s?.name ?? 'Διαγραμμένος') : `Μαθήματα ${coverage(p)}`}
               </span>
               <span className="block truncate text-xs text-base-content/55">
-                {showStudent && `${shortDay(p.date)} · `}
-                {p.lessonCount} {p.lessonCount === 1 ? 'μάθημα' : 'μαθήματα'} · {PAYMENT_METHOD_LABELS[p.method]}
+                {p.lessonCount} {p.lessonCount === 1 ? 'μάθημα' : 'μαθήματα'}
+                {showStudent && ` (${coverage(p)})`} · {PAYMENT_METHOD_LABELS[p.method]}
                 {p.notes && ` · ${p.notes}`}
               </span>
             </span>

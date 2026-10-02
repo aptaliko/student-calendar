@@ -5,7 +5,7 @@ import { lessons, type Lesson, type LessonStatus } from '../schema';
 export type LessonInput = Pick<
   Lesson,
   'studentId' | 'date' | 'startTime' | 'durationMinutes' | 'priceCents' | 'topic' | 'notes'
-> & { status?: LessonStatus; paid?: boolean; seriesId?: string | null; paymentId?: number | null };
+> & { status?: LessonStatus; paid?: boolean; seriesId?: string | null; paymentId?: number | null; paidCents?: number | null };
 
 export async function listLessons(
   ownerId: number,

@@ -15,6 +15,13 @@
       "when": 1790971453775,
       "tag": "0001_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790972593958,
+      "tag": "0002_payment_allocation",
+      "breakpoints": true
     }
   ]
 }

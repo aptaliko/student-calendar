@@ -7,15 +7,20 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   other: 'Άλλο',
 };
 
-/** Money actually received in a period: recorded payments dated in it, plus lessons in it that
- *  were ticked "paid" by hand (no payment record, so the lesson price is the amount). */
-export function collectedCents(
-  periodPayments: { amountCents: number }[],
-  periodLessons: { paid: boolean; paymentId: number | null; priceCents: number; status: string }[],
-): number {
-  const fromPayments = periodPayments.reduce((s, p) => s + p.amountCents, 0);
-  const manual = periodLessons
-    .filter((l) => l.paid && l.paymentId === null && (l.status === 'attended' || l.status === 'no_show'))
-    .reduce((s, l) => s + l.priceCents, 0);
-  return fromPayments + manual;
+/**
+ * Splits a payment across lessons in proportion to their prices (largest-remainder rounding),
+ * so the shares always add up to exactly `amountCents`. With a discount every lesson gets
+ * proportionally less; this is what lets "collected" be reported per month of the lessons.
+ */
+export function allocatePayment(amountCents: number, prices: number[]): number[] {
+  if (prices.length === 0) return [];
+  const total = prices.reduce((s, p) => s + p, 0);
+  const weights = total > 0 ? prices : prices.map(() => 1);
+  const weightSum = total > 0 ? total : prices.length;
+  const exact = weights.map((w) => (amountCents * w) / weightSum);
+  const shares = exact.map(Math.floor);
+  let remainder = amountCents - shares.reduce((s, v) => s + v, 0);
+  const order = exact.map((v, i) => [v - Math.floor(v), i] as const).sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+  for (let k = 0; remainder > 0; k = (k + 1) % order.length, remainder--) shares[order[k][1]]++;
+  return shares;
 }

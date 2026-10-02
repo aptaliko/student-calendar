@@ -8,6 +8,8 @@ export type ReportLesson = {
   priceCents: number;
   status: LessonStatus;
   paid: boolean;
+  /** Share of a payment; null means the full price was paid (or the lesson is unpaid). */
+  paidCents?: number | null;
 };
 
 export type Totals = {
@@ -19,7 +21,7 @@ export type Totals = {
   scheduled: number;
   attendedMinutes: number;
   earnedCents: number; // attended + no-show
-  paidCents: number;
+  paidCents: number; // actually received for these lessons (after any discount)
   outstandingCents: number;
   upcomingCents: number; // still-scheduled lessons, not yet earned
   attendanceRate: number | null; // attended / (attended + no-show + excused)
@@ -65,7 +67,7 @@ function add(t: Totals, l: ReportLesson) {
   }
   if (isCharged(l.status)) {
     t.earnedCents += l.priceCents;
-    if (l.paid) t.paidCents += l.priceCents;
+    if (l.paid) t.paidCents += l.paidCents ?? l.priceCents;
     else t.outstandingCents += l.priceCents;
   }
 }

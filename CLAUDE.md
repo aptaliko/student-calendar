@@ -20,15 +20,23 @@ HMAC-signed cookie auth, vitest.
   `cancelled` and `scheduled` are not. All report math is in `src/lib/reports.ts` (unit tested).
 - Payments (`payments` table, `src/db/queries/payments.ts`) cover one or more lessons via
   `lessons.paymentId`; recording one marks its lessons `paid`, deleting it un-marks them. The
-  amount may differ from the lessons' sum (discount). "Owed" is lesson-based; "collected" in
-  reports is cash-based: payments dated in the period + lessons ticked paid by hand
-  (`collectedCents` in `src/lib/payments.ts`). "Settle" creates a payment for the full balance.
+  amount may differ from the lessons' sum (discount) and is split across them into
+  `lessons.paidCents` (`allocatePayment`). Payments have no date: money counts towards the
+  month of the lessons it pays for, so "collected" for a month = sum of `paidCents ?? priceCents`
+  over that month's paid lessons. "Settle" creates a payment for the full balance.
 - Every query is scoped by `ownerId`. `src/proxy.ts` verifies the session cookie and sets
   `x-user-id` for route handlers (`getUserId`); server components use `requireUser()`.
 - The UI is Greek only (`<html lang="el">`); strings live inline in the components, like in
   glentify. The font is Manrope because it has Greek glyphs (Plus Jakarta Sans does not).
 - Date labels and money (`1.234,50 €`) are built by hand, not with `Intl`: Node's and browsers' ICU disagree on
   punctuation, which causes hydration errors in client components.
+
+## Deploying
+
+Push to `main` → CI → `.github/workflows/deploy.yml` migrates the production DB, then
+`vercel deploy --prod`. Vercel git auto-deploy for `main` is off (`vercel.json`). A schema
+change only needs `npm run db:generate` and a commit; hand-written data backfills go into the
+generated SQL file (see `drizzle/0002_payment_allocation.sql`).
 
 ## Commands
 

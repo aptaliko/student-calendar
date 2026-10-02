@@ -29,6 +29,13 @@ describe('reports', () => {
     expect(t.attendanceRate).toBeCloseTo(1 / 3);
   });
 
+  it('counts a lesson\'s share of a discounted payment as collected', () => {
+    const t = totals([L({ paid: true, paidCents: 2000 }), L({ paid: true, paidCents: null }), L({ paid: false })]);
+    expect(t.earnedCents).toBe(9000);
+    expect(t.paidCents).toBe(5000);
+    expect(t.outstandingCents).toBe(3000);
+  });
+
   it('has no attendance rate before anything is marked', () => {
     expect(totals([L({ status: 'scheduled' })]).attendanceRate).toBeNull();
   });

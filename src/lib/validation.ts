@@ -46,7 +46,6 @@ export const lessonPatchSchema = lessonSchema.partial();
 
 export const paymentSchema = z.object({
   studentId: z.number().int().positive(),
-  date: isoDate,
   amountCents: cents.refine((v) => v > 0, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
   method: z.enum(PAYMENT_METHODS).default('cash'),
   notes: optionalText,

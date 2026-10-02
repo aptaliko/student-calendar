@@ -34,22 +34,21 @@ export const students = pgTable(
 export const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'other'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
-// A payment received from a student, covering one or more lessons. The amount can differ from
-// the sum of its lessons (discount, rounding); lesson-based "owed" figures ignore that, report
-// "collected" figures use the amount.
+// A payment received from a student, covering one or more lessons. It has no date of its own:
+// money counts towards the month of the lessons it pays for. The amount can differ from the
+// lessons' sum (discount); it is split across them into `lessons.paidCents`.
 export const payments = pgTable(
   'payments',
   {
     id: serial('id').primaryKey(),
     ownerId: integer('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     studentId: integer('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
-    date: date('date', { mode: 'string' }).notNull(),
     amountCents: integer('amount_cents').notNull(),
     method: text('method').$type<PaymentMethod>().notNull().default('cash'),
     notes: text('notes'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
-  (t) => [index('payments_owner_date_idx').on(t.ownerId, t.date), index('payments_student_idx').on(t.studentId)],
+  (t) => [index('payments_owner_idx').on(t.ownerId), index('payments_student_idx').on(t.studentId)],
 );
 
 // Lesson status:
@@ -77,6 +76,9 @@ export const lessons = pgTable(
     paid: boolean('paid').notNull().default(false),
     // Set when the lesson was paid as part of a recorded payment; null when toggled paid by hand.
     paymentId: integer('payment_id').references(() => payments.id, { onDelete: 'set null' }),
+    // This lesson's share of its payment (differs from priceCents after a discount). Null when
+    // unpaid or ticked paid by hand, in which case the full priceCents counts as paid.
+    paidCents: integer('paid_cents'),
     topic: text('topic'),
     notes: text('notes'),
     // Shared by lessons created together as a weekly series.

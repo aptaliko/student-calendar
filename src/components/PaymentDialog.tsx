@@ -37,7 +37,6 @@ export default function PaymentDialog({
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [amount, setAmount] = useState('');
   const [amountTouched, setAmountTouched] = useState(false);
-  const [date, setDate] = useState(prefs.today);
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -95,7 +94,7 @@ export default function PaymentDialog({
     setSaving(true);
     setError(null);
     try {
-      await api('/api/payments', 'POST', { studentId, date, amountCents, method, notes, lessonIds: chosen.map((l) => l.id) });
+      await api('/api/payments', 'POST', { studentId, amountCents, method, notes, lessonIds: chosen.map((l) => l.id) });
       toast(`Καταχωρήθηκε πληρωμή ${formatMoney(amountCents, prefs.currency)} για ${chosen.length} ${chosen.length === 1 ? 'μάθημα' : 'μαθήματα'} 💸`);
       onSaved();
       onClose();
@@ -212,7 +211,7 @@ export default function PaymentDialog({
 
         {lessons && lessons.length > 0 && (
           <>
-            <section className="grid grid-cols-2 gap-3">
+            <section>
               <label className="block">
                 <span className="mb-1 block text-sm font-medium">Ποσό</span>
                 <label className="input w-full">
@@ -227,11 +226,7 @@ export default function PaymentDialog({
                   />
                 </label>
               </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium">Ημερομηνία πληρωμής</span>
-                <input type="date" className="input w-full" value={date} onChange={(e) => setDate(e.target.value)} required />
-              </label>
-              <p className="col-span-2 -mt-1 text-xs text-base-content/55 tabular">
+              <p className="mt-1 text-xs text-base-content/55 tabular">
                 Σύνολο επιλεγμένων: {formatMoney(sum, prefs.currency)}
                 {diff < 0 && <span className="text-warning"> · έκπτωση {formatMoney(-diff, prefs.currency)}</span>}
                 {diff > 0 && <span className="text-info"> · επιπλέον {formatMoney(diff, prefs.currency)}</span>}
