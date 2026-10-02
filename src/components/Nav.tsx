@@ -6,10 +6,10 @@ import { BarChart3, CalendarDays, LayoutDashboard, LogOut, Plus, Settings, Users
 import { useEditors } from './Editors';
 
 const LINKS = [
-  { href: '/', label: 'Today', icon: LayoutDashboard },
-  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-  { href: '/students', label: 'Students', icon: Users },
-  { href: '/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/', label: 'Σήμερα', icon: LayoutDashboard },
+  { href: '/calendar', label: 'Ημερολόγιο', icon: CalendarDays },
+  { href: '/students', label: 'Μαθητές', icon: Users },
+  { href: '/reports', label: 'Αναφορές', icon: BarChart3 },
 ];
 
 function useIsActive() {
@@ -23,8 +23,8 @@ export function Logo({ className = '' }: { className?: string }) {
     <span className={`flex items-center gap-2.5 ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/icon.svg" alt="" className="size-9 rounded-xl shadow-md shadow-primary/30" />
-      <span className="text-lg leading-tight font-extrabold tracking-tight">
-        Student<span className="brand-text">Calendar</span>
+      <span className="leading-tight font-extrabold tracking-tight">
+        Ημερολόγιο <span className="brand-text">Μαθητών</span>
       </span>
     </span>
   );
@@ -45,7 +45,7 @@ export function Sidebar({ userName }: { userName: string }) {
         <Logo />
       </Link>
       <button className="btn btn-primary brand-gradient border-0 shadow-lg shadow-primary/25" onClick={() => newLesson()}>
-        <Plus className="size-5" /> New lesson
+        <Plus className="size-5" /> Νέο μάθημα
       </button>
       <nav className="flex flex-col gap-1">
         {LINKS.map(({ href, label, icon: Icon }) => (
@@ -69,13 +69,13 @@ export function Sidebar({ userName }: { userName: string }) {
           }`}
         >
           <Settings className="size-5" />
-          <span className="truncate">{userName || 'Settings'}</span>
+          <span className="truncate">{userName || 'Ρυθμίσεις'}</span>
         </Link>
         <button
           onClick={logout}
           className="flex items-center gap-3 rounded-field px-3 py-2.5 text-sm font-medium text-base-content/70 transition hover:bg-base-200"
         >
-          <LogOut className="size-5" /> Log out
+          <LogOut className="size-5" /> Αποσύνδεση
         </button>
       </div>
     </aside>
@@ -88,7 +88,7 @@ export function MobileHeader() {
       <Link href="/">
         <Logo />
       </Link>
-      <Link href="/settings" className="btn btn-ghost btn-circle" aria-label="Settings">
+      <Link href="/settings" className="btn btn-ghost btn-circle" aria-label="Ρυθμίσεις">
         <Settings className="size-5" />
       </Link>
     </header>
@@ -103,7 +103,7 @@ export function MobileTabBar() {
     <Link
       key={href}
       href={href}
-      className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
+      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium ${
         isActive(href) ? 'text-primary' : 'text-base-content/60'
       }`}
     >
@@ -118,7 +118,7 @@ export function MobileTabBar() {
       <div className="flex flex-1 justify-center">
         <button
           onClick={() => newLesson()}
-          aria-label="New lesson"
+          aria-label="Νέο μάθημα"
           className="brand-gradient -mt-6 mb-1 grid size-14 place-items-center rounded-full text-white shadow-xl shadow-primary/40 ring-4 ring-base-100 transition active:scale-95"
         >
           <Plus className="size-7" />

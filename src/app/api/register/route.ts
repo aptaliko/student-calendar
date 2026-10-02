@@ -7,22 +7,22 @@ import { accountSchema } from '@/lib/validation';
 
 const registerSchema = z.object({
   name: z.string().trim().max(120).default(''),
-  email: z.email('Enter a valid email'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.email('Συμπληρώστε ένα έγκυρο email'),
+  password: z.string().min(8, 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες'),
   timezone: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
   const parsed = registerSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Μη έγκυρα στοιχεία' }, { status: 400 });
   }
   const { name, email, password } = parsed.data;
   const tz = accountSchema.shape.timezone.safeParse(parsed.data.timezone);
   const timezone = tz.success && tz.data ? tz.data : 'UTC';
 
   if (await getUserByEmail(email)) {
-    return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
+    return NextResponse.json({ error: 'Υπάρχει ήδη λογαριασμός με αυτό το email' }, { status: 409 });
   }
 
   const user = await createUser({ email, name, timezone, passwordHash: hashPassword(password) });

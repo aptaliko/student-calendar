@@ -1,6 +1,7 @@
 # Student Calendar
 
 Schedule lessons, track attendance and see what you earn — built for private teachers.
+The interface is in Greek (Ημερολόγιο Μαθητών).
 
 - **Today** dashboard: greeting, this month's hours / income / outstanding / attendance, a
   *Needs marking* list for past lessons, one-tap **Present / No-show / Excused** buttons, and

@@ -52,13 +52,13 @@ export default function CalendarView({ view, date, today, days, lessons }: Props
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="join">
-            <Link href={href(view, prev)} className="btn btn-ghost btn-square join-item" aria-label="Previous">
+            <Link href={href(view, prev)} className="btn btn-ghost btn-square join-item" aria-label="Προηγούμενο">
               <ChevronLeft className="size-5" />
             </Link>
             <Link href={href(view, today)} className="btn btn-ghost join-item">
-              Today
+              Σήμερα
             </Link>
-            <Link href={href(view, next)} className="btn btn-ghost btn-square join-item" aria-label="Next">
+            <Link href={href(view, next)} className="btn btn-ghost btn-square join-item" aria-label="Επόμενο">
               <ChevronRight className="size-5" />
             </Link>
           </div>
@@ -66,14 +66,14 @@ export default function CalendarView({ view, date, today, days, lessons }: Props
         </div>
         <div className="flex items-center gap-2">
           <span className="hidden text-sm text-base-content/55 tabular md:inline">
-            Earned: <b className="text-base-content">{formatMoney(rangeEarned, prefs.currency)}</b>
+            Έσοδα: <b className="text-base-content">{formatMoney(rangeEarned, prefs.currency)}</b>
           </span>
           <div role="tablist" className="tabs tabs-box tabs-sm">
             <Link role="tab" href={href('month', date)} className={`tab ${view === 'month' ? 'tab-active' : ''}`}>
-              Month
+              Μήνας
             </Link>
             <Link role="tab" href={href('week', date)} className={`tab ${view === 'week' ? 'tab-active' : ''}`}>
-              Week
+              Εβδομάδα
             </Link>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function CalendarView({ view, date, today, days, lessons }: Props
             onClick={() => setFilter(null)}
             className={`btn btn-xs rounded-full ${filter === null ? 'btn-neutral' : 'btn-ghost bg-base-100'}`}
           >
-            Everyone
+            Όλοι
           </button>
           {students
             .filter((s) => !s.archived)
@@ -191,7 +191,7 @@ function MonthView({ date, today, days, byDate }: { date: string; today: string;
                     <Pill key={l.id} lesson={l} />
                   ))}
                   {list.length > 3 && (
-                    <span className="block px-1.5 text-[11px] font-medium text-base-content/50">+{list.length - 3} more</span>
+                    <span className="block px-1.5 text-[11px] font-medium text-base-content/50">+{list.length - 3} ακόμη</span>
                   )}
                 </div>
               </div>
@@ -205,11 +205,11 @@ function MonthView({ date, today, days, byDate }: { date: string; today: string;
         <div className="flex items-center justify-between px-3 pt-2 pb-1">
           <h2 className="font-bold">{longDay(selected)}</h2>
           <button className="btn btn-ghost btn-sm" onClick={() => newLesson({ date: selected })}>
-            <Plus className="size-4" /> Add
+            <Plus className="size-4" /> Προσθήκη
           </button>
         </div>
         {selectedLessons.length === 0 ? (
-          <p className="px-3 pb-4 text-sm text-base-content/50">No lessons.</p>
+          <p className="px-3 pb-4 text-sm text-base-content/50">Κανένα μάθημα.</p>
         ) : (
           <div className="divide-y divide-base-200">
             {selectedLessons.map((l) => (
@@ -240,12 +240,12 @@ function WeekView({ today, days, byDate }: { today: string; days: string[]; byDa
             <div key={d} className={`card-surface p-2 ${d === today ? 'ring-2 ring-primary/40' : ''}`}>
               <div className="flex items-center justify-between px-3 pt-1">
                 <h2 className="font-bold">{shortDay(d)}</h2>
-                <button className="btn btn-ghost btn-xs" onClick={() => newLesson({ date: d })} aria-label="Add lesson">
+                <button className="btn btn-ghost btn-xs" onClick={() => newLesson({ date: d })} aria-label="Προσθήκη μαθήματος">
                   <Plus className="size-4" />
                 </button>
               </div>
               {list.length === 0 ? (
-                <p className="px-3 pb-2 text-sm text-base-content/40">Free</p>
+                <p className="px-3 pb-2 text-sm text-base-content/40">Ελεύθερη</p>
               ) : (
                 <div className="divide-y divide-base-200">
                   {list.map((l) => (
@@ -290,7 +290,7 @@ function WeekView({ today, days, byDate }: { today: string; days: string[]; byDa
                     style={{ height: HOUR_PX }}
                     onClick={() => newLesson({ date: d, startTime: minutesToTime(h * 60) })}
                     className="block w-full border-b border-base-200 transition hover:bg-primary/5"
-                    aria-label={`New lesson ${d} ${h}:00`}
+                    aria-label={`Νέο μάθημα ${d} ${h}:00`}
                   />
                 ))}
                 {layoutDay(byDate.get(d) ?? []).map(({ item: l, lane, lanes, start, end }) => {

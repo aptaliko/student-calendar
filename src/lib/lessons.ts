@@ -5,11 +5,11 @@ export const STATUS_META: Record<
   LessonStatus,
   { label: string; short: string; charged: boolean; badge: string; dot: string }
 > = {
-  scheduled: { label: 'Scheduled', short: 'Planned', charged: false, badge: 'badge-ghost', dot: 'bg-base-content/30' },
-  attended: { label: 'Attended', short: 'Present', charged: true, badge: 'badge-success', dot: 'bg-success' },
-  no_show: { label: 'No-show (charged)', short: 'No-show', charged: true, badge: 'badge-error', dot: 'bg-error' },
-  excused: { label: 'Excused absence', short: 'Excused', charged: false, badge: 'badge-warning', dot: 'bg-warning' },
-  cancelled: { label: 'Cancelled', short: 'Cancelled', charged: false, badge: 'badge-neutral', dot: 'bg-base-content/20' },
+  scheduled: { label: 'Προγραμματισμένο', short: 'Εκκρεμεί', charged: false, badge: 'badge-ghost', dot: 'bg-base-content/30' },
+  attended: { label: 'Παρουσία', short: 'Παρών', charged: true, badge: 'badge-success', dot: 'bg-success' },
+  no_show: { label: 'Απουσία (χρεώνεται)', short: 'Απών', charged: true, badge: 'badge-error', dot: 'bg-error' },
+  excused: { label: 'Δικαιολογημένη απουσία', short: 'Δικαιολ.', charged: false, badge: 'badge-warning', dot: 'bg-warning' },
+  cancelled: { label: 'Ακυρώθηκε', short: 'Ακυρώθηκε', charged: false, badge: 'badge-neutral', dot: 'bg-base-content/20' },
 };
 
 export function isCharged(status: LessonStatus): boolean {

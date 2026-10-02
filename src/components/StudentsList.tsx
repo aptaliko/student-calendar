@@ -34,7 +34,7 @@ export default function StudentsList({ rows }: { rows: Row[] }) {
   if (rows.length === 0) {
     return (
       <div className="card-surface">
-        <EmptyState icon={<Users className="size-7" />} title="No students yet" text="Add a student with their hourly rate to start scheduling lessons.">
+        <EmptyState icon={<Users className="size-7" />} title="Δεν υπάρχουν μαθητές ακόμη" text="Προσθέστε έναν μαθητή με την ωριαία χρέωσή του για να ξεκινήσετε τον προγραμματισμό.">
           <NewStudentButton />
         </EmptyState>
       </div>
@@ -46,15 +46,15 @@ export default function StudentsList({ rows }: { rows: Row[] }) {
       <div className="flex flex-wrap items-center gap-3">
         <label className="input flex-1 sm:max-w-xs">
           <Search className="size-4 opacity-50" />
-          <input type="search" placeholder="Search students" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input type="search" placeholder="Αναζήτηση μαθητών" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
         {archivedCount > 0 && (
           <div role="tablist" className="tabs tabs-box tabs-sm">
             <button role="tab" className={`tab ${!showArchived ? 'tab-active' : ''}`} onClick={() => setShowArchived(false)}>
-              Active
+              Ενεργοί
             </button>
             <button role="tab" className={`tab ${showArchived ? 'tab-active' : ''}`} onClick={() => setShowArchived(true)}>
-              Archived ({archivedCount})
+              Αρχειοθετημένοι ({archivedCount})
             </button>
           </div>
         )}
@@ -72,8 +72,8 @@ export default function StudentsList({ rows }: { rows: Row[] }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-lg font-bold">{s.name}</div>
                 <div className="truncate text-sm text-base-content/55">
-                  {formatMoney(s.hourlyRateCents, prefs.currency, { compact: true })}/h
-                  {next && ` · next ${shortDay(next.slice(0, 10))} ${next.slice(11)}`}
+                  {formatMoney(s.hourlyRateCents, prefs.currency, { compact: true })}/ώρα
+                  {next && ` · επόμενο ${shortDay(next.slice(0, 10))} ${next.slice(11)}`}
                 </div>
               </div>
               <ChevronRight className="size-5 text-base-content/30 transition group-hover:translate-x-0.5 group-hover:text-primary" />
@@ -81,23 +81,23 @@ export default function StudentsList({ rows }: { rows: Row[] }) {
             <div className="grid grid-cols-3 gap-2 rounded-box bg-base-200/70 p-2 text-center">
               <div>
                 <div className="font-bold tabular">{formatHours(monthMinutes)}</div>
-                <div className="text-[11px] text-base-content/50">this month</div>
+                <div className="text-[11px] text-base-content/50">αυτόν τον μήνα</div>
               </div>
               <div>
                 <div className="font-bold tabular">{attendanceRate === null ? '—' : `${Math.round(attendanceRate * 100)}%`}</div>
-                <div className="text-[11px] text-base-content/50">attendance</div>
+                <div className="text-[11px] text-base-content/50">παρουσίες</div>
               </div>
               <div>
                 <div className={`font-bold tabular ${outstandingCents > 0 ? 'text-warning' : ''}`}>
                   {formatMoney(outstandingCents, prefs.currency, { compact: true })}
                 </div>
-                <div className="text-[11px] text-base-content/50">owed</div>
+                <div className="text-[11px] text-base-content/50">οφειλή</div>
               </div>
             </div>
           </Link>
         ))}
       </div>
-      {filtered.length === 0 && <p className="py-10 text-center text-base-content/50">No students match “{query}”.</p>}
+      {filtered.length === 0 && <p className="py-10 text-center text-base-content/50">Κανένας μαθητής δεν ταιριάζει με «{query}».</p>}
     </div>
   );
 }

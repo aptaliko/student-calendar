@@ -31,7 +31,7 @@ export default function Modal({
       <div className="modal-box max-h-[92dvh] p-0 sm:max-w-lg">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-base-300 bg-base-100/90 px-5 py-4 backdrop-blur">
           <h3 className="text-lg font-bold">{title}</h3>
-          <button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={onClose} aria-label="Close">
+          <button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={onClose} aria-label="Κλείσιμο">
             <X className="size-5" />
           </button>
         </div>
@@ -43,7 +43,7 @@ export default function Modal({
         )}
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button aria-label="Close">close</button>
+        <button aria-label="Κλείσιμο">κλείσιμο</button>
       </form>
     </dialog>
   );

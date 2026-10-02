@@ -1,9 +1,9 @@
 import { CalendarCheck2, ChartNoAxesColumn, Wallet } from 'lucide-react';
 
 const FEATURES = [
-  { icon: CalendarCheck2, title: 'One-tap attendance', text: 'Mark present, no-show or excused straight from today’s list.' },
-  { icon: Wallet, title: 'Know who owes what', text: 'Every lesson is priced automatically. Track paid and outstanding.' },
-  { icon: ChartNoAxesColumn, title: 'Monthly & yearly reports', text: 'Hours taught and income per student, exportable to CSV.' },
+  { icon: CalendarCheck2, title: 'Παρουσίες με ένα πάτημα', text: 'Σημειώστε παρουσία, απουσία ή δικαιολογημένη απουσία κατευθείαν από τη λίστα της ημέρας.' },
+  { icon: Wallet, title: 'Ξέρετε ποιος σας χρωστάει', text: 'Κάθε μάθημα κοστολογείται αυτόματα. Παρακολουθήστε πληρωμές και οφειλές.' },
+  { icon: ChartNoAxesColumn, title: 'Μηνιαίες & ετήσιες αναφορές', text: 'Ώρες διδασκαλίας και έσοδα ανά μαθητή, με εξαγωγή σε Excel (CSV).' },
 ];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -15,14 +15,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="relative flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon.svg" alt="" className="size-10 rounded-xl ring-2 ring-white/40" />
-          <span className="text-xl font-extrabold tracking-tight">Student Calendar</span>
+          <span className="text-xl font-extrabold tracking-tight">Ημερολόγιο Μαθητών</span>
         </div>
         <div className="relative my-auto max-w-md">
-          <h1 className="text-5xl leading-[1.05] font-extrabold tracking-tight">
-            Your lessons, beautifully organised.
+          <h1 className="text-5xl leading-[1.1] font-extrabold tracking-tight">
+            Τα μαθήματά σας, όμορφα οργανωμένα.
           </h1>
           <p className="mt-4 text-lg text-white/80">
-            Schedule students, track attendance and see exactly what you earn — every month, every year.
+            Προγραμματίστε μαθητές, καταγράψτε παρουσίες και δείτε ακριβώς τι κερδίζετε — κάθε μήνα, κάθε χρόνο.
           </p>
           <ul className="mt-10 space-y-5">
             {FEATURES.map(({ icon: Icon, title, text }) => (

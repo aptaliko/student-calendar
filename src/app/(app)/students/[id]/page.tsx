@@ -31,7 +31,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   return (
     <div className="animate-rise space-y-6">
       <Link href="/students" className="btn btn-ghost btn-sm -ml-2">
-        <ArrowLeft className="size-4" /> Students
+        <ArrowLeft className="size-4" /> Μαθητές
       </Link>
 
       <div className="card-surface relative overflow-hidden p-5 sm:p-6">
@@ -41,10 +41,10 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
           <div className="min-w-0 flex-1">
             <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
               {student.name}
-              {student.archived && <span className="badge badge-neutral badge-sm">Archived</span>}
+              {student.archived && <span className="badge badge-neutral badge-sm">Αρχειοθετημένος</span>}
             </h1>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-base-content/60">
-              <span>{formatMoney(student.hourlyRateCents, user.currency)}/hour</span>
+              <span>{formatMoney(student.hourlyRateCents, user.currency)}/ώρα</span>
               {student.email && (
                 <a href={`mailto:${student.email}`} className="flex items-center gap-1 hover:text-primary">
                   <Mail className="size-3.5" /> {student.email}
@@ -60,54 +60,54 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
           <div className="flex items-center gap-1">
             <EditStudentButton student={student} />
             <StudentMenu student={student} />
-            <NewLessonButton defaults={{ studentId: student.id }} className="btn btn-primary btn-sm" label="Schedule" />
+            <NewLessonButton defaults={{ studentId: student.id }} className="btn btn-primary btn-sm" label="Προγραμματισμός" />
           </div>
         </div>
         {student.notes && <p className="relative mt-4 rounded-box bg-base-200 p-3 text-sm whitespace-pre-line">{student.notes}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatTile icon={Clock3} label="Hours taught" value={formatHours(t.attendedMinutes)} hint={`${t.attended} lessons attended`} />
-        <StatTile icon={Coins} tone="secondary" label="Earned" value={formatMoney(t.earnedCents, user.currency, { compact: true })} hint="all time" />
+        <StatTile icon={Clock3} label="Ώρες διδασκαλίας" value={formatHours(t.attendedMinutes)} hint={`${t.attended} μαθήματα με παρουσία`} />
+        <StatTile icon={Coins} tone="secondary" label="Έσοδα" value={formatMoney(t.earnedCents, user.currency, { compact: true })} hint="συνολικά" />
         <StatTile
           icon={Percent}
           tone="success"
-          label="Attendance"
+          label="Παρουσίες"
           value={t.attendanceRate === null ? '—' : `${Math.round(t.attendanceRate * 100)}%`}
-          hint={`${t.noShow} no-show · ${t.excused} excused`}
+          hint={`${t.noShow} απουσίες · ${t.excused} δικαιολ.`}
         />
-        <StatTile icon={Wallet} tone="warning" label="Owes you" value={formatMoney(t.outstandingCents, user.currency, { compact: true })} hint={`${formatMoney(t.paidCents, user.currency)} paid`} />
+        <StatTile icon={Wallet} tone="warning" label="Οφειλή" value={formatMoney(t.outstandingCents, user.currency, { compact: true })} hint={`${formatMoney(t.paidCents, user.currency)} πληρωμένα`} />
       </div>
 
       {t.outstandingCents > 0 && (
         <div className="alert alert-warning alert-soft">
           <Wallet className="size-5" />
           <span>
-            {student.name} has <b>{formatMoney(t.outstandingCents, user.currency)}</b> outstanding.
+            Εκκρεμεί οφειλή <b>{formatMoney(t.outstandingCents, user.currency)}</b> ({student.name}).
           </span>
           <SettleButton studentId={student.id} amountCents={t.outstandingCents} className="btn btn-sm btn-warning" />
         </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <Card className="min-w-0 lg:col-span-2" title={<span className="flex items-center gap-2"><CalendarClock className="size-5 text-primary" /> Upcoming</span>}>
+        <Card className="min-w-0 lg:col-span-2" title={<span className="flex items-center gap-2"><CalendarClock className="size-5 text-primary" /> Επερχόμενα</span>}>
           {upcoming.length === 0 ? (
-            <EmptyState icon={<CalendarClock className="size-7" />} title="Nothing scheduled">
-              <NewLessonButton defaults={{ studentId: student.id }} className="btn btn-primary btn-sm" label="Schedule weekly lessons" />
+            <EmptyState icon={<CalendarClock className="size-7" />} title="Κανένα προγραμματισμένο μάθημα">
+              <NewLessonButton defaults={{ studentId: student.id }} className="btn btn-primary btn-sm" label="Προγραμματισμός εβδομαδιαίων μαθημάτων" />
             </EmptyState>
           ) : (
             <div className="divide-y divide-base-200">
               {upcoming.slice(0, 8).map((l) => (
                 <LessonRow key={l.id} lesson={l} showStudent={false} showDate />
               ))}
-              {upcoming.length > 8 && <p className="px-3 py-2 text-sm text-base-content/50">+{upcoming.length - 8} more</p>}
+              {upcoming.length > 8 && <p className="px-3 py-2 text-sm text-base-content/50">+{upcoming.length - 8} ακόμη</p>}
             </div>
           )}
         </Card>
 
-        <Card className="min-w-0 lg:col-span-3" title={<span className="flex items-center gap-2"><History className="size-5 text-primary" /> History</span>}>
+        <Card className="min-w-0 lg:col-span-3" title={<span className="flex items-center gap-2"><History className="size-5 text-primary" /> Ιστορικό</span>}>
           {months.size === 0 ? (
-            <EmptyState icon={<History className="size-7" />} title="No past lessons yet" />
+            <EmptyState icon={<History className="size-7" />} title="Δεν υπάρχουν προηγούμενα μαθήματα" />
           ) : (
             [...months.entries()].map(([month, list]) => {
               const mt = totals(list);

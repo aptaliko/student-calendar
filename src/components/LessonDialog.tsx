@@ -5,7 +5,7 @@ import { Repeat, Trash2, UserPlus } from 'lucide-react';
 import type { Lesson, LessonStatus, Student } from '@/db/schema';
 import { api } from '@/lib/api';
 import { LESSON_STATUS_ORDER, STATUS_META, colorOf } from '@/lib/lessons';
-import { centsToInput, formatMoney, parseMoney, priceFor } from '@/lib/money';
+import { centsToInput, formatMoney, parseMoney, priceFor, currencySymbol } from '@/lib/money';
 import Avatar from './Avatar';
 import Modal from './Modal';
 import { useToast } from './Toast';
@@ -61,8 +61,8 @@ export default function LessonDialog({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!studentId) return setError('Pick a student');
-    if (priceCents === null) return setError('Enter a valid price');
+    if (!studentId) return setError('Επιλέξτε μαθητή');
+    if (priceCents === null) return setError('Συμπληρώστε έγκυρη τιμή');
     setSaving(true);
     setError(null);
     const body = {
@@ -79,10 +79,10 @@ export default function LessonDialog({
     try {
       if (lesson) {
         await api(`/api/lessons/${lesson.id}`, 'PATCH', body);
-        toast('Lesson updated');
+        toast('Το μάθημα ενημερώθηκε');
       } else {
         const created = await api<Lesson[]>('/api/lessons', 'POST', { ...body, repeatWeeks: repeat ? weeks : 1 });
-        toast(created.length > 1 ? `${created.length} weekly lessons scheduled` : 'Lesson scheduled');
+        toast(created.length > 1 ? `Προγραμματίστηκαν ${created.length} εβδομαδιαία μαθήματα` : 'Το μάθημα προγραμματίστηκε');
       }
       onSaved();
       onClose();
@@ -94,12 +94,12 @@ export default function LessonDialog({
 
   async function remove(series: boolean) {
     if (!lesson) return;
-    const msg = series ? 'Delete this and all following lessons in the series?' : 'Delete this lesson?';
+    const msg = series ? 'Διαγραφή αυτού και όλων των επόμενων μαθημάτων της σειράς;' : 'Διαγραφή αυτού του μαθήματος;';
     if (!confirm(msg)) return;
     setSaving(true);
     try {
       const res = await api<{ count: number }>(`/api/lessons/${lesson.id}${series ? '?series=future' : ''}`, 'DELETE');
-      toast(res.count > 1 ? `${res.count} lessons deleted` : 'Lesson deleted');
+      toast(res.count > 1 ? `Διαγράφηκαν ${res.count} μαθήματα` : 'Το μάθημα διαγράφηκε');
       onSaved();
       onClose();
     } catch (err) {
@@ -112,24 +112,24 @@ export default function LessonDialog({
     <Modal
       open
       onClose={onClose}
-      title={lesson ? 'Lesson' : 'New lesson'}
+      title={lesson ? 'Μάθημα' : 'Νέο μάθημα'}
       footer={
         <>
           {lesson && (
             <div className="dropdown dropdown-top">
-              <button type="button" tabIndex={0} className="btn btn-ghost btn-square text-error" aria-label="Delete">
+              <button type="button" tabIndex={0} className="btn btn-ghost btn-square text-error" aria-label="Διαγραφή">
                 <Trash2 className="size-5" />
               </button>
               <ul tabIndex={0} className="menu dropdown-content z-20 w-60 rounded-box bg-base-100 p-2 shadow-xl">
                 <li>
                   <button type="button" onClick={() => remove(false)}>
-                    Delete this lesson
+                    Διαγραφή μόνο αυτού
                   </button>
                 </li>
                 {lesson.seriesId && (
                   <li>
                     <button type="button" onClick={() => remove(true)}>
-                      Delete this &amp; following
+                      Διαγραφή αυτού &amp; των επόμενων
                     </button>
                   </li>
                 )}
@@ -141,11 +141,11 @@ export default function LessonDialog({
             {!lesson && repeat && ` × ${weeks}`}
           </div>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Cancel
+            Ακύρωση
           </button>
           <button type="submit" form="lesson-form" className="btn btn-primary" disabled={saving}>
             {saving && <span className="loading loading-spinner loading-sm" />}
-            {lesson ? 'Save' : 'Schedule'}
+            {lesson ? 'Αποθήκευση' : 'Προγραμματισμός'}
           </button>
         </>
       }
@@ -153,10 +153,10 @@ export default function LessonDialog({
       <form id="lesson-form" onSubmit={submit} className="space-y-5">
         {/* Student */}
         <section>
-          <span className="mb-2 block text-sm font-medium">Student</span>
+          <span className="mb-2 block text-sm font-medium">Μαθητής</span>
           {active.length === 0 ? (
             <button type="button" onClick={onAddStudent} className="btn btn-outline btn-primary w-full">
-              <UserPlus className="size-4" /> Add your first student
+              <UserPlus className="size-4" /> Προσθέστε τον πρώτο σας μαθητή
             </button>
           ) : (
             <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -183,7 +183,7 @@ export default function LessonDialog({
                 type="button"
                 onClick={onAddStudent}
                 className="btn btn-ghost btn-circle btn-sm shrink-0 self-center"
-                aria-label="Add student"
+                aria-label="Προσθήκη μαθητή"
               >
                 <UserPlus className="size-4" />
               </button>
@@ -194,11 +194,11 @@ export default function LessonDialog({
         {/* When */}
         <section className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Date</span>
+            <span className="mb-1 block text-sm font-medium">Ημερομηνία</span>
             <input type="date" className="input w-full" value={date} onChange={(e) => setDate(e.target.value)} required />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Start</span>
+            <span className="mb-1 block text-sm font-medium">Έναρξη</span>
             <input
               type="time"
               step={300}
@@ -211,7 +211,7 @@ export default function LessonDialog({
         </section>
 
         <section>
-          <span className="mb-2 block text-sm font-medium">Duration</span>
+          <span className="mb-2 block text-sm font-medium">Διάρκεια</span>
           <div className="flex flex-wrap items-center gap-2">
             {DURATIONS.map((d) => (
               <button
@@ -220,7 +220,7 @@ export default function LessonDialog({
                 onClick={() => setDuration(d)}
                 className={`btn btn-sm rounded-full ${duration === d ? 'btn-primary' : 'btn-ghost bg-base-200'}`}
               >
-                {d < 60 ? `${d}m` : `${d / 60}h`.replace('.5h', '½h')}
+                {d < 60 ? `${d}′` : `${d / 60}`.replace('.5', '½') + ' ώρ.'}
               </button>
             ))}
             <label className="input input-sm w-28 rounded-full">
@@ -231,17 +231,17 @@ export default function LessonDialog({
                 step={5}
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value) || 0)}
-                aria-label="Duration in minutes"
+                aria-label="Διάρκεια σε λεπτά"
               />
-              <span className="text-base-content/50">min</span>
+              <span className="text-base-content/50">λεπτά</span>
             </label>
           </div>
         </section>
 
         <section>
-          <span className="mb-1 block text-sm font-medium">Price</span>
+          <span className="mb-1 block text-sm font-medium">Τιμή</span>
           <label className="input w-full">
-            <span className="text-base-content/50">{prefs.currency}</span>
+            <span className="text-base-content/50">{currencySymbol(prefs.currency)}</span>
             <input
               inputMode="decimal"
               value={priceTouched ? price : centsToInput(autoPrice)}
@@ -256,13 +256,13 @@ export default function LessonDialog({
                 className="link link-primary text-xs no-underline"
                 onClick={() => setPriceTouched(false)}
               >
-                use rate
+                βάσει χρέωσης
               </button>
             )}
           </label>
           {student && !priceTouched && (
             <p className="mt-1 text-xs text-base-content/50">
-              From {student.name}&apos;s rate of {formatMoney(student.hourlyRateCents, prefs.currency)}/h
+              Με βάση τη χρέωση {formatMoney(student.hourlyRateCents, prefs.currency)}/ώρα ({student.name})
             </p>
           )}
         </section>
@@ -271,12 +271,12 @@ export default function LessonDialog({
           <section className="rounded-box bg-base-200 p-3">
             <label className="flex cursor-pointer items-center gap-3">
               <Repeat className="size-5 text-primary" />
-              <span className="flex-1 text-sm font-medium">Repeat every week</span>
+              <span className="flex-1 text-sm font-medium">Επανάληψη κάθε εβδομάδα</span>
               <input type="checkbox" className="toggle toggle-primary" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} />
             </label>
             {repeat && (
               <label className="mt-3 flex items-center gap-3 text-sm">
-                <span className="flex-1">Number of lessons</span>
+                <span className="flex-1">Αριθμός μαθημάτων</span>
                 <input
                   type="range"
                   min={2}
@@ -293,7 +293,7 @@ export default function LessonDialog({
 
         {lesson && (
           <section>
-            <span className="mb-2 block text-sm font-medium">Attendance</span>
+            <span className="mb-2 block text-sm font-medium">Παρουσία</span>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {LESSON_STATUS_ORDER.map((s) => (
                 <button
@@ -311,11 +311,11 @@ export default function LessonDialog({
               ))}
             </div>
             <p className="mt-2 text-xs text-base-content/50">
-              {charged ? 'This lesson counts towards your income.' : 'This lesson is not charged.'}
+              {charged ? 'Το μάθημα μετράει στα έσοδά σας.' : 'Το μάθημα δεν χρεώνεται.'}
             </p>
             {charged && (
               <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-box bg-base-200 p-3">
-                <span className="flex-1 text-sm font-medium">Paid</span>
+                <span className="flex-1 text-sm font-medium">Πληρώθηκε</span>
                 <input type="checkbox" className="toggle toggle-success" checked={paid} onChange={(e) => setPaid(e.target.checked)} />
               </label>
             )}
@@ -324,12 +324,12 @@ export default function LessonDialog({
 
         <section className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Topic</span>
-            <input className="input w-full" placeholder="e.g. Chapter 4 — past tense" value={topic} onChange={(e) => setTopic(e.target.value)} />
+            <span className="mb-1 block text-sm font-medium">Θέμα</span>
+            <input className="input w-full" placeholder="π.χ. Κεφάλαιο 4 — Αόριστος" value={topic} onChange={(e) => setTopic(e.target.value)} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Notes</span>
-            <textarea className="textarea w-full" rows={2} placeholder="Homework, progress…" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <span className="mb-1 block text-sm font-medium">Σημειώσεις</span>
+            <textarea className="textarea w-full" rows={2} placeholder="Εργασίες, πρόοδος…" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </label>
         </section>
 

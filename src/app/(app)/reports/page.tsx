@@ -11,7 +11,7 @@ import { formatHours, formatMoney } from '@/lib/money';
 import { totals, totalsByMonth, totalsByStudent } from '@/lib/reports';
 import { requireUser } from '@/lib/session';
 
-export const metadata = { title: 'Reports' };
+export const metadata = { title: 'Αναφορές' };
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ period?: string; date?: string }> }) {
   const user = await requireUser();
@@ -46,28 +46,28 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const link = (p: string, d: string) => `/reports?period=${p}&date=${d}`;
 
   const breakdown = [
-    { label: 'Attended', n: t.attended, cls: 'bg-success' },
-    { label: 'No-show', n: t.noShow, cls: 'bg-error' },
-    { label: 'Excused', n: t.excused, cls: 'bg-warning' },
-    { label: 'Cancelled', n: t.cancelled, cls: 'bg-base-content/25' },
-    { label: 'Not marked', n: t.scheduled, cls: 'bg-base-content/10' },
+    { label: 'Παρουσία', n: t.attended, cls: 'bg-success' },
+    { label: 'Απουσία (χρεώνεται)', n: t.noShow, cls: 'bg-error' },
+    { label: 'Δικαιολογημένη', n: t.excused, cls: 'bg-warning' },
+    { label: 'Ακυρώθηκε', n: t.cancelled, cls: 'bg-base-content/25' },
+    { label: 'Χωρίς καταχώριση', n: t.scheduled, cls: 'bg-base-content/10' },
   ];
 
   return (
     <div className="animate-rise space-y-6">
-      <PageHeader title="Reports" subtitle="Hours, attendance and income at a glance.">
+      <PageHeader title="Αναφορές" subtitle="Ώρες, παρουσίες και έσοδα με μια ματιά.">
         <a href={`/api/reports/export?from=${from}&to=${to}`} className="btn btn-ghost btn-sm" download>
-          <Download className="size-4" /> Export CSV
+          <Download className="size-4" /> Εξαγωγή σε Excel
         </a>
       </PageHeader>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="join">
-            <Link href={link(period, prev)} className="btn btn-ghost btn-square join-item" aria-label="Previous">
+            <Link href={link(period, prev)} className="btn btn-ghost btn-square join-item" aria-label="Προηγούμενο">
               <ChevronLeft className="size-5" />
             </Link>
-            <Link href={link(period, next)} className="btn btn-ghost btn-square join-item" aria-label="Next">
+            <Link href={link(period, next)} className="btn btn-ghost btn-square join-item" aria-label="Επόμενο">
               <ChevronRight className="size-5" />
             </Link>
           </div>
@@ -75,19 +75,19 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </div>
         <div role="tablist" className="tabs tabs-box tabs-sm">
           <Link role="tab" href={link('month', date)} className={`tab ${period === 'month' ? 'tab-active' : ''}`}>
-            Month
+            Μήνας
           </Link>
           <Link role="tab" href={link('year', date)} className={`tab ${period === 'year' ? 'tab-active' : ''}`}>
-            Year
+            Έτος
           </Link>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatTile icon={Clock3} label="Hours taught" value={formatHours(t.attendedMinutes)} hint={`${t.attended} lessons attended`} />
-        <StatTile icon={Coins} tone="secondary" label="Income earned" value={formatMoney(t.earnedCents, user.currency, { compact: true })} hint={`incl. ${t.noShow} charged no-shows`} />
-        <StatTile icon={HandCoins} tone="success" label="Collected" value={formatMoney(t.paidCents, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} outstanding`} />
-        <StatTile icon={TrendingUp} tone="accent" label="Effective rate" value={perHour ? `${formatMoney(perHour, user.currency, { compact: true })}/h` : '—'} hint={t.upcomingCents ? `${formatMoney(t.upcomingCents, user.currency)} still scheduled` : 'per hour taught'} />
+        <StatTile icon={Clock3} label="Ώρες διδασκαλίας" value={formatHours(t.attendedMinutes)} hint={`${t.attended} μαθήματα με παρουσία`} />
+        <StatTile icon={Coins} tone="secondary" label="Έσοδα" value={formatMoney(t.earnedCents, user.currency, { compact: true })} hint={`μαζί με ${t.noShow} χρεωμένες απουσίες`} />
+        <StatTile icon={HandCoins} tone="success" label="Εισπράχθηκαν" value={formatMoney(t.paidCents, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} σε εκκρεμότητα`} />
+        <StatTile icon={TrendingUp} tone="accent" label="Πραγματική χρέωση" value={perHour ? `${formatMoney(perHour, user.currency, { compact: true })}/ώρα` : '—'} hint={t.upcomingCents ? `${formatMoney(t.upcomingCents, user.currency)} ακόμη προγραμματισμένα` : 'ανά ώρα διδασκαλίας'} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -96,12 +96,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </div>
         <div className="card-surface p-4 sm:p-5">
           <h2 className="flex items-center gap-2 font-bold">
-            <Percent className="size-5 text-primary" /> Attendance
+            <Percent className="size-5 text-primary" /> Παρουσίες
           </h2>
           <div className="mt-3 text-4xl font-extrabold tracking-tight tabular">
             {t.attendanceRate === null ? '—' : `${Math.round(t.attendanceRate * 100)}%`}
           </div>
-          <p className="text-sm text-base-content/55">of marked lessons attended</p>
+          <p className="text-sm text-base-content/55">των καταχωρημένων μαθημάτων με παρουσία</p>
           {t.lessons > 0 && (
             <div className="mt-5 flex h-3 gap-[2px] overflow-hidden rounded-full">
               {breakdown
@@ -123,23 +123,23 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <Card title={<span className="flex items-center gap-2"><BarChart3 className="size-5 text-primary" /> By student</span>}>
+      <Card title={<span className="flex items-center gap-2"><BarChart3 className="size-5 text-primary" /> Ανά μαθητή</span>}>
         {perStudent.length === 0 ? (
-          <EmptyState icon={<Wallet className="size-7" />} title={`No lessons in ${label}`} />
+          <EmptyState icon={<Wallet className="size-7" />} title={`Κανένα μάθημα (${label})`} />
         ) : (
           <div className="overflow-x-auto">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Student</th>
-                  <th className="text-right">Attended</th>
-                  <th className="text-right">Hours</th>
-                  <th className="hidden text-right sm:table-cell">No-show</th>
-                  <th className="hidden text-right sm:table-cell">Excused</th>
-                  <th className="hidden text-right md:table-cell">Attendance</th>
-                  <th className="text-right">Earned</th>
-                  <th className="hidden text-right md:table-cell">Paid</th>
-                  <th className="text-right">Owed</th>
+                  <th>Μαθητής</th>
+                  <th className="text-right">Παρουσίες</th>
+                  <th className="text-right">Ώρες</th>
+                  <th className="hidden text-right sm:table-cell">Απουσίες</th>
+                  <th className="hidden text-right sm:table-cell">Δικαιολ.</th>
+                  <th className="hidden text-right md:table-cell">Ποσοστό</th>
+                  <th className="text-right">Έσοδα</th>
+                  <th className="hidden text-right md:table-cell">Πληρωμένα</th>
+                  <th className="text-right">Οφειλή</th>
                 </tr>
               </thead>
               <tbody className="tabular">
@@ -150,7 +150,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                       <td>
                         <Link href={`/students/${id}`} className="flex items-center gap-2 font-medium">
                           {s && <Avatar name={s.name} color={s.color} size="sm" />}
-                          <span className="truncate">{s?.name ?? 'Deleted'}</span>
+                          <span className="truncate">{s?.name ?? 'Διαγραμμένος'}</span>
                         </Link>
                       </td>
                       <td className="text-right">{st.attended}</td>
@@ -169,7 +169,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
               </tbody>
               <tfoot className="tabular">
                 <tr>
-                  <th>Total</th>
+                  <th>Σύνολο</th>
                   <th className="text-right">{t.attended}</th>
                   <th className="text-right">{formatHours(t.attendedMinutes)}</th>
                   <th className="hidden text-right sm:table-cell">{t.noShow}</th>

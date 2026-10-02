@@ -22,11 +22,11 @@ export default function SettingsForm({ initial, zones }: { initial: Initial; zon
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const defaultRateCents = parseMoney(rate);
-    if (defaultRateCents === null) return toast('Enter a valid rate', 'error');
+    if (defaultRateCents === null) return toast('Συμπληρώστε έγκυρη χρέωση', 'error');
     setSaving(true);
     try {
       await api('/api/account', 'PATCH', { name, currency, defaultRateCents, defaultDurationMinutes: duration, timezone });
-      toast('Settings saved');
+      toast('Οι ρυθμίσεις αποθηκεύτηκαν');
       router.refresh();
     } catch (err) {
       toast((err as Error).message, 'error');
@@ -44,13 +44,13 @@ export default function SettingsForm({ initial, zones }: { initial: Initial; zon
   return (
     <form onSubmit={submit} className="space-y-6">
       <section className="card-surface space-y-4 p-5">
-        <h2 className="font-bold">Profile</h2>
+        <h2 className="font-bold">Προφίλ</h2>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">Your name</span>
+          <span className="mb-1 block text-sm font-medium">Το όνομά σας</span>
           <input className="input w-full" value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">Timezone</span>
+          <span className="mb-1 block text-sm font-medium">Ζώνη ώρας</span>
           <select className="select w-full" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
             {!zones.includes(timezone) && <option value={timezone}>{timezone}</option>}
             {zones.map((z) => (
@@ -59,15 +59,15 @@ export default function SettingsForm({ initial, zones }: { initial: Initial; zon
               </option>
             ))}
           </select>
-          <span className="mt-1 block text-xs text-base-content/50">Used to work out what “today” means for you.</span>
+          <span className="mt-1 block text-xs text-base-content/50">Χρησιμοποιείται για να ξέρουμε ποια μέρα είναι «σήμερα» για εσάς.</span>
         </label>
       </section>
 
       <section className="card-surface space-y-4 p-5">
-        <h2 className="font-bold">Lesson defaults</h2>
+        <h2 className="font-bold">Προεπιλογές μαθημάτων</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Currency</span>
+            <span className="mb-1 block text-sm font-medium">Νόμισμα</span>
             <select className="select w-full" value={currency} onChange={(e) => setCurrency(e.target.value)}>
               {CURRENCIES.map((c) => (
                 <option key={c}>{c}</option>
@@ -75,11 +75,11 @@ export default function SettingsForm({ initial, zones }: { initial: Initial; zon
             </select>
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Hourly rate</span>
+            <span className="mb-1 block text-sm font-medium">Ωριαία χρέωση</span>
             <input className="input w-full" inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Duration (min)</span>
+            <span className="mb-1 block text-sm font-medium">Διάρκεια (λεπτά)</span>
             <input
               type="number"
               min={5}
@@ -91,17 +91,17 @@ export default function SettingsForm({ initial, zones }: { initial: Initial; zon
           </label>
         </div>
         <p className="text-xs text-base-content/50">
-          New students start with this rate. Changing a rate never changes the price of lessons already scheduled.
+          Οι νέοι μαθητές ξεκινούν με αυτή τη χρέωση. Η αλλαγή χρέωσης δεν αλλάζει ποτέ την τιμή μαθημάτων που έχουν ήδη προγραμματιστεί.
         </p>
       </section>
 
       <div className="flex items-center gap-2">
         <button type="button" onClick={logout} className="btn btn-ghost lg:hidden">
-          <LogOut className="size-4" /> Log out
+          <LogOut className="size-4" /> Αποσύνδεση
         </button>
         <button className="btn btn-primary ml-auto" disabled={saving}>
           {saving && <span className="loading loading-spinner loading-sm" />}
-          Save changes
+          Αποθήκευση αλλαγών
         </button>
       </div>
     </form>

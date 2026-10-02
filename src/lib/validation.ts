@@ -11,12 +11,12 @@ const optionalText = z
   .nullish()
   .transform((v) => (v ? v : null));
 
-export const isoDate = z.string().refine(isValidISODate, 'Invalid date');
-export const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Invalid time');
+export const isoDate = z.string().refine(isValidISODate, 'Μη έγκυρη ημερομηνία');
+export const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Μη έγκυρη ώρα');
 const cents = z.number().int().min(0).max(100_000_000);
 
 export const studentSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(120),
+  name: z.string().trim().min(1, 'Το όνομα είναι υποχρεωτικό').max(120),
   email: optionalText,
   phone: optionalText,
   color: z.enum(STUDENT_COLOR_NAMES as [string, ...string[]]),
@@ -58,10 +58,10 @@ export const accountSchema = z.object({
       } catch {
         return false;
       }
-    }, 'Unknown timezone')
+    }, 'Άγνωστη ζώνη ώρας')
     .optional(),
 });
 
 export function firstError(error: z.ZodError): string {
-  return error.issues[0]?.message ?? 'Invalid input';
+  return error.issues[0]?.message ?? 'Μη έγκυρα στοιχεία';
 }

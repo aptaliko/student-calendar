@@ -20,7 +20,9 @@ HMAC-signed cookie auth, vitest.
   `cancelled` and `scheduled` are not. All report math is in `src/lib/reports.ts` (unit tested).
 - Every query is scoped by `ownerId`. `src/proxy.ts` verifies the session cookie and sets
   `x-user-id` for route handlers (`getUserId`); server components use `requireUser()`.
-- Date labels are built by hand, not with `Intl`: Node's and browsers' ICU disagree on
+- The UI is Greek only (`<html lang="el">`); strings live inline in the components, like in
+  glentify. The font is Manrope because it has Greek glyphs (Plus Jakarta Sans does not).
+- Date labels and money (`1.234,50 €`) are built by hand, not with `Intl`: Node's and browsers' ICU disagree on
   punctuation, which causes hydration errors in client components.
 
 ## Commands

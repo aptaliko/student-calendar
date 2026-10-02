@@ -6,6 +6,6 @@ export async function api<T = unknown>(url: string, method: string, body?: unkno
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Το αίτημα απέτυχε (${res.status})`);
   return data as T;
 }

@@ -12,14 +12,13 @@ import { formatHours, formatMoney } from '@/lib/money';
 import { totals, totalsByStudent } from '@/lib/reports';
 import { requireUser } from '@/lib/session';
 
-export const metadata = { title: 'Today' };
+export const metadata = { title: 'Σήμερα' };
 
 function greeting(time: string) {
   const h = Number(time.slice(0, 2));
-  if (h < 5) return 'Working late';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 5) return 'Καλό ξενύχτι';
+  if (h < 12) return 'Καλημέρα';
+  return 'Καλησπέρα';
 }
 
 export default async function TodayPage() {
@@ -64,8 +63,10 @@ export default async function TodayPage() {
           </h1>
           <p className="mt-1 text-base-content/60">
             {todays.length === 0
-              ? 'No lessons today — enjoy the free time ✨'
-              : `You have ${todays.length} lesson${todays.length === 1 ? '' : 's'} today.`}
+              ? 'Κανένα μάθημα σήμερα — απολαύστε τον ελεύθερο χρόνο ✨'
+              : todays.length === 1
+                ? 'Έχετε 1 μάθημα σήμερα.'
+                : `Έχετε ${todays.length} μαθήματα σήμερα.`}
           </p>
         </div>
         <NewLessonButton className="btn btn-primary hidden lg:inline-flex" />
@@ -75,30 +76,30 @@ export default async function TodayPage() {
         <Card>
           <EmptyState
             icon={<Sparkles className="size-7" />}
-            title="Let’s get you set up"
-            text="Add your first student with their hourly rate, then schedule a lesson. Recurring weekly lessons take one click."
+            title="Ας ξεκινήσουμε"
+            text="Προσθέστε τον πρώτο σας μαθητή με την ωριαία χρέωσή του και μετά προγραμματίστε ένα μάθημα. Τα εβδομαδιαία μαθήματα στήνονται με ένα κλικ."
           >
-            <NewStudentButton className="btn btn-primary brand-gradient border-0" label="Add your first student" />
+            <NewStudentButton className="btn btn-primary brand-gradient border-0" label="Προσθήκη πρώτου μαθητή" />
           </EmptyState>
         </Card>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            <StatTile icon={Clock3} label="Hours this month" value={formatHours(month.attendedMinutes)} hint={`${month.attended} lessons attended`} />
-            <StatTile icon={Coins} tone="secondary" label="Earned" value={formatMoney(month.earnedCents, user.currency, { compact: true })} hint={monthLabel(today)} />
+            <StatTile icon={Clock3} label="Ώρες αυτόν τον μήνα" value={formatHours(month.attendedMinutes)} hint={`${month.attended} μαθήματα με παρουσία`} />
+            <StatTile icon={Coins} tone="secondary" label="Έσοδα" value={formatMoney(month.earnedCents, user.currency, { compact: true })} hint={monthLabel(today)} />
             <StatTile
               icon={Wallet}
               tone="warning"
-              label="Outstanding"
+              label="Οφειλές"
               value={formatMoney(totalOutstanding, user.currency, { compact: true })}
-              hint={`${balances.length} student${balances.length === 1 ? '' : 's'} owe`}
+              hint={balances.length === 1 ? '1 μαθητής χρωστάει' : `${balances.length} μαθητές χρωστάνε`}
             />
             <StatTile
               icon={Percent}
               tone="success"
-              label="Attendance"
+              label="Παρουσίες"
               value={month.attendanceRate === null ? '—' : `${Math.round(month.attendanceRate * 100)}%`}
-              hint={`${month.noShow} no-show · ${month.excused} excused`}
+              hint={`${month.noShow} απουσίες · ${month.excused} δικαιολ.`}
             />
           </div>
 
@@ -107,12 +108,12 @@ export default async function TodayPage() {
               className="ring-2 ring-warning/40"
               title={
                 <span className="flex items-center gap-2">
-                  <AlarmClock className="size-5 text-warning" /> Needs marking
+                  <AlarmClock className="size-5 text-warning" /> Προς καταχώριση
                   <span className="badge badge-warning badge-sm">{needsMarking.length}</span>
                 </span>
               }
             >
-              <p className="px-3 pb-1 text-sm text-base-content/55">Did these students show up? One tap to record it.</p>
+              <p className="px-3 pb-1 text-sm text-base-content/55">Ήρθαν αυτοί οι μαθητές; Καταχωρήστε το με ένα πάτημα.</p>
               <div className="divide-y divide-base-200">
                 {needsMarking.slice(0, 8).map((l) => (
                   <LessonRow key={l.id} lesson={l} showDate />
@@ -120,7 +121,7 @@ export default async function TodayPage() {
               </div>
               {needsMarking.length > 8 && (
                 <Link href="/calendar" className="btn btn-ghost btn-sm m-2">
-                  + {needsMarking.length - 8} more in the calendar
+                  + {needsMarking.length - 8} ακόμη στο ημερολόγιο
                 </Link>
               )}
             </Card>
@@ -128,9 +129,9 @@ export default async function TodayPage() {
 
           <div className="grid gap-6 lg:grid-cols-5">
             <div className="min-w-0 space-y-6 lg:col-span-3">
-              <Card title="Today" action={<NewLessonButton defaults={{ date: today }} className="btn btn-ghost btn-sm" label="Add" />}>
+              <Card title="Σήμερα" action={<NewLessonButton defaults={{ date: today }} className="btn btn-ghost btn-sm" label="Προσθήκη" />}>
                 {todays.length === 0 ? (
-                  <EmptyState icon={<CalendarHeart className="size-7" />} title="Nothing scheduled today" />
+                  <EmptyState icon={<CalendarHeart className="size-7" />} title="Κανένα μάθημα σήμερα" />
                 ) : (
                   <div className="divide-y divide-base-200">
                     {todays.map((l) => (
@@ -140,9 +141,9 @@ export default async function TodayPage() {
                 )}
               </Card>
 
-              <Card title="Next 7 days" action={<Link href="/calendar?view=week" className="btn btn-ghost btn-sm">Week view</Link>}>
+              <Card title="Επόμενες 7 ημέρες" action={<Link href="/calendar?view=week" className="btn btn-ghost btn-sm">Εβδομάδα</Link>}>
                 {upcoming.length === 0 ? (
-                  <EmptyState icon={<CalendarPlus className="size-7" />} title="Your week is open" text="Schedule recurring lessons to fill it up.">
+                  <EmptyState icon={<CalendarPlus className="size-7" />} title="Η εβδομάδα σας είναι ελεύθερη" text="Προγραμματίστε επαναλαμβανόμενα μαθήματα για να τη γεμίσετε.">
                     <NewLessonButton className="btn btn-primary btn-sm" />
                   </EmptyState>
                 ) : (
@@ -156,9 +157,9 @@ export default async function TodayPage() {
             </div>
 
             <div className="min-w-0 space-y-6 lg:col-span-2">
-              <Card title="Who owes you" action={<span className="text-sm font-semibold tabular">{formatMoney(totalOutstanding, user.currency)}</span>}>
+              <Card title="Ποιος σας χρωστάει" action={<span className="text-sm font-semibold tabular">{formatMoney(totalOutstanding, user.currency)}</span>}>
                 {balances.length === 0 ? (
-                  <EmptyState icon={<Wallet className="size-7" />} title="All settled up" text="Every charged lesson has been paid. 🎉" />
+                  <EmptyState icon={<Wallet className="size-7" />} title="Όλα εξοφλημένα" text="Κάθε χρεωμένο μάθημα έχει πληρωθεί. 🎉" />
                 ) : (
                   <ul className="divide-y divide-base-200">
                     {balances.slice(0, 6).map(([id, t]) => {
@@ -170,7 +171,7 @@ export default async function TodayPage() {
                           <Link href={`/students/${id}`} className="min-w-0 flex-1">
                             <span className="block truncate font-medium">{s.name}</span>
                             <span className="block text-xs text-base-content/50">
-                              {formatMoney(t.outstandingCents, user.currency)} unpaid
+                              {formatMoney(t.outstandingCents, user.currency)} απλήρωτα
                             </span>
                           </Link>
                           <SettleButton studentId={id} amountCents={t.outstandingCents} />
@@ -181,7 +182,7 @@ export default async function TodayPage() {
                 )}
               </Card>
 
-              <Card title="Students" action={<Link href="/students" className="btn btn-ghost btn-sm">All</Link>}>
+              <Card title="Μαθητές" action={<Link href="/students" className="btn btn-ghost btn-sm">Όλοι</Link>}>
                 <div className="flex flex-wrap gap-2 px-3 pt-1 pb-3">
                   {students
                     .filter((s) => !s.archived)
@@ -195,10 +196,10 @@ export default async function TodayPage() {
                         {s.name}
                       </Link>
                     ))}
-                  <NewStudentButton className="btn btn-ghost btn-sm rounded-full" label="Add" />
+                  <NewStudentButton className="btn btn-ghost btn-sm rounded-full" label="Προσθήκη" />
                 </div>
                 <div className="flex items-center gap-2 px-3 pb-2 text-xs text-base-content/50">
-                  <Users className="size-3.5" /> {students.filter((s) => !s.archived).length} active
+                  <Users className="size-3.5" /> {students.filter((s) => !s.archived).length} ενεργοί
                 </div>
               </Card>
             </div>

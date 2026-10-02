@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
-  subsets: ["latin", "latin-ext"],
+const manrope = Manrope({
+  variable: "--font-sans-app",
+  subsets: ["greek", "latin"],
 });
 
 export const metadata: Metadata = {
-  title: { default: "Student Calendar", template: "%s · Student Calendar" },
-  description: "Schedule lessons, track attendance and see what you earn — built for private teachers.",
+  title: { default: "Ημερολόγιο Μαθητών", template: "%s · Ημερολόγιο Μαθητών" },
+  description: "Προγραμματίστε μαθήματα, καταγράψτε παρουσίες και δείτε τα έσοδά σας — για ιδιαίτερους καθηγητές.",
 };
 
 export const viewport: Viewport = {
@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} h-full antialiased`}>
+    <html lang="el" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

@@ -19,7 +19,7 @@ export function proxy(request: NextRequest) {
 
   if (userId === null) {
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Απαιτείται σύνδεση' }, { status: 401 });
     }
     return NextResponse.redirect(new URL('/login', request.url));
   }

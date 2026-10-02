@@ -13,7 +13,7 @@ import { useToast } from './Toast';
 export function NewLessonButton({
   defaults,
   className = 'btn btn-primary',
-  label = 'New lesson',
+  label = 'Νέο μάθημα',
 }: {
   defaults?: LessonDefaults;
   className?: string;
@@ -27,7 +27,7 @@ export function NewLessonButton({
   );
 }
 
-export function NewStudentButton({ className = 'btn btn-primary', label = 'Add student' }: { className?: string; label?: string }) {
+export function NewStudentButton({ className = 'btn btn-primary', label = 'Προσθήκη μαθητή' }: { className?: string; label?: string }) {
   const { newStudent } = useEditors();
   return (
     <button className={className} onClick={newStudent}>
@@ -40,7 +40,7 @@ export function EditStudentButton({ student }: { student: Student }) {
   const { editStudent } = useEditors();
   return (
     <button className="btn btn-ghost btn-sm" onClick={() => editStudent(student)}>
-      <Pencil className="size-4" /> Edit
+      <Pencil className="size-4" /> Επεξεργασία
     </button>
   );
 }
@@ -59,11 +59,11 @@ export function SettleButton({
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   async function settle() {
-    if (!confirm(`Mark ${formatMoney(amountCents, prefs.currency)} as paid?`)) return;
+    if (!confirm(`Να σημειωθούν ${formatMoney(amountCents, prefs.currency)} ως εξοφλημένα;`)) return;
     setBusy(true);
     try {
       const res = await api<{ count: number }>(`/api/students/${studentId}/settle`, 'POST');
-      toast(`${res.count} lesson${res.count === 1 ? '' : 's'} marked paid 💸`);
+      toast(res.count === 1 ? '1 μάθημα σημειώθηκε ως πληρωμένο 💸' : `${res.count} μαθήματα σημειώθηκαν ως πληρωμένα 💸`);
       router.refresh();
     } catch (err) {
       toast((err as Error).message, 'error');
@@ -74,7 +74,7 @@ export function SettleButton({
   return (
     <button className={className} onClick={settle} disabled={busy}>
       {busy ? <span className="loading loading-spinner loading-xs" /> : <Wallet className="size-4" />}
-      Settle
+      Εξόφληση
     </button>
   );
 }

@@ -7,7 +7,7 @@ import { endOfMonth, startOfMonth, todayIn } from '@/lib/dates';
 import { totalsByStudent } from '@/lib/reports';
 import { requireUser } from '@/lib/session';
 
-export const metadata = { title: 'Students' };
+export const metadata = { title: 'Μαθητές' };
 
 export default async function StudentsPage() {
   const user = await requireUser();
@@ -33,7 +33,7 @@ export default async function StudentsPage() {
 
   return (
     <div className="animate-rise">
-      <PageHeader title="Students" subtitle={`${students.filter((s) => !s.archived).length} active students`}>
+      <PageHeader title="Μαθητές" subtitle={`${students.filter((s) => !s.archived).length} ενεργοί μαθητές`}>
         <NewStudentButton />
       </PageHeader>
       <StudentsList rows={rows} />

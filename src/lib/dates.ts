@@ -109,31 +109,33 @@ export function minutesToTime(minutes: number): string {
 }
 
 // Labels are built by hand rather than with Intl: Node's and browsers' ICU data disagree on
-// punctuation ("Fri, 2 Oct" vs "Fri 2 Oct"), which breaks hydration of client components.
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// punctuation, which breaks hydration of client components. Greek needs the nominative month
+// for "Οκτώβριος 2026" but the genitive after a day number ("2 Οκτωβρίου").
+const MONTHS = ['Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος', 'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'];
+const MONTHS_GENITIVE = ['Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίου', 'Απριλίου', 'Μαΐου', 'Ιουνίου', 'Ιουλίου', 'Αυγούστου', 'Σεπτεμβρίου', 'Οκτωβρίου', 'Νοεμβρίου', 'Δεκεμβρίου'];
+const MONTHS_SHORT = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μαΐ', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
+const WEEKDAYS = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή'];
+export const WEEKDAY_SHORT = ['Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ', 'Κυρ'];
 
-const parts = (iso: ISODate) => ({
-  y: iso.slice(0, 4),
-  month: MONTHS[Number(iso.slice(5, 7)) - 1],
-  day: Number(iso.slice(8, 10)),
-  weekday: WEEKDAYS[weekdayIndex(iso)],
-});
+const parts = (iso: ISODate) => {
+  const m = Number(iso.slice(5, 7)) - 1;
+  return { y: iso.slice(0, 4), m, day: Number(iso.slice(8, 10)), wd: weekdayIndex(iso) };
+};
 
-export const monthLabel = (iso: ISODate) => `${parts(iso).month} ${parts(iso).y}`;
-export const shortMonth = (iso: ISODate) => parts(iso).month.slice(0, 3);
+export const monthLabel = (iso: ISODate) => `${MONTHS[parts(iso).m]} ${parts(iso).y}`;
+export const shortMonth = (iso: ISODate) => MONTHS_SHORT[parts(iso).m];
+/** 'Παρασκευή 2 Οκτωβρίου' */
 export const longDay = (iso: ISODate) => {
   const p = parts(iso);
-  return `${p.weekday} ${p.day} ${p.month}`;
+  return `${WEEKDAYS[p.wd]} ${p.day} ${MONTHS_GENITIVE[p.m]}`;
 };
+/** 'Παρ, 2 Οκτ' */
 export const shortDay = (iso: ISODate) => {
   const p = parts(iso);
-  return `${p.weekday.slice(0, 3)}, ${p.day} ${p.month.slice(0, 3)}`;
+  return `${WEEKDAY_SHORT[p.wd]}, ${p.day} ${MONTHS_SHORT[p.m]}`;
 };
-/** '2 Oct' or, with year, '2 Oct 2026'. */
+/** '2 Οκτ' or, with year, '2 Οκτ 2026'. */
 export const dayMonth = (iso: ISODate, withYear = false) => {
   const p = parts(iso);
-  return `${p.day} ${p.month.slice(0, 3)}${withYear ? ` ${p.y}` : ''}`;
+  return `${p.day} ${MONTHS_SHORT[p.m]}${withYear ? ` ${p.y}` : ''}`;
 };
-
-export const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

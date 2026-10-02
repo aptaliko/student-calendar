@@ -19,15 +19,15 @@ async function main() {
 
   const [user] = await db
     .insert(users)
-    .values({ email: EMAIL, passwordHash: hashPassword('demo1234'), name: 'Maria Papadopoulou', timezone: 'Europe/Athens' })
+    .values({ email: EMAIL, passwordHash: hashPassword('demo1234'), name: 'Μαρία Παπαδοπούλου', timezone: 'Europe/Athens' })
     .returning();
 
   const roster = [
-    { name: 'Nikos Georgiou', color: 'violet', hourlyRateCents: 2500, weekday: 0, time: '16:00', minutes: 60, email: 'nikos@example.com' },
-    { name: 'Eleni Dimitriou', color: 'sky', hourlyRateCents: 3000, weekday: 1, time: '17:30', minutes: 90, phone: '+30 690 000 0000' },
-    { name: 'Sophie Laurent', color: 'emerald', hourlyRateCents: 2000, weekday: 2, time: '15:00', minutes: 45 },
-    { name: 'Alex Martin', color: 'amber', hourlyRateCents: 2800, weekday: 3, time: '18:00', minutes: 60 },
-    { name: 'Katerina Ioannou', color: 'rose', hourlyRateCents: 2500, weekday: 4, time: '16:30', minutes: 60 },
+    { name: 'Νίκος Γεωργίου', color: 'violet', hourlyRateCents: 2500, weekday: 0, time: '16:00', minutes: 60, email: 'nikos@example.com' },
+    { name: 'Ελένη Δημητρίου', color: 'sky', hourlyRateCents: 3000, weekday: 1, time: '17:30', minutes: 90, phone: '+30 690 000 0000' },
+    { name: 'Σοφία Λαμπράκη', color: 'emerald', hourlyRateCents: 2000, weekday: 2, time: '15:00', minutes: 45 },
+    { name: 'Αλέξης Μαρτίνος', color: 'amber', hourlyRateCents: 2800, weekday: 3, time: '18:00', minutes: 60 },
+    { name: 'Κατερίνα Ιωάννου', color: 'rose', hourlyRateCents: 2500, weekday: 4, time: '16:30', minutes: 60 },
   ];
 
   const created = await db

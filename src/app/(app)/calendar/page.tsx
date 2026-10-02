@@ -3,7 +3,7 @@ import CalendarView from '@/components/CalendarView';
 import { isValidISODate, monthGrid, todayIn, weekDates } from '@/lib/dates';
 import { requireUser } from '@/lib/session';
 
-export const metadata = { title: 'Calendar' };
+export const metadata = { title: 'Ημερολόγιο' };
 
 export default async function CalendarPage({
   searchParams,

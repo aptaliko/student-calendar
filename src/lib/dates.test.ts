@@ -57,9 +57,9 @@ describe('dates', () => {
 describe('labels', () => {
   it('formats deterministically', async () => {
     const { shortDay, longDay, monthLabel, dayMonth } = await import('./dates');
-    expect(shortDay('2026-10-02')).toBe('Fri, 2 Oct');
-    expect(longDay('2026-10-02')).toBe('Friday 2 October');
-    expect(monthLabel('2026-10-02')).toBe('October 2026');
-    expect(dayMonth('2026-12-28', true)).toBe('28 Dec 2026');
+    expect(shortDay('2026-10-02')).toBe('Παρ, 2 Οκτ');
+    expect(longDay('2026-10-02')).toBe('Παρασκευή 2 Οκτωβρίου');
+    expect(monthLabel('2026-10-02')).toBe('Οκτώβριος 2026');
+    expect(dayMonth('2026-12-28', true)).toBe('28 Δεκ 2026');
   });
 });

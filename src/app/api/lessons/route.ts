@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const { repeatWeeks, ...lesson } = parsed.data;
 
   if (!(await getStudent(userId, lesson.studentId))) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Ο μαθητής δεν βρέθηκε' }, { status: 404 });
   }
 
   const seriesId = repeatWeeks > 1 ? randomUUID() : null;

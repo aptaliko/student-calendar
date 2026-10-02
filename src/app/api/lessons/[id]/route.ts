@@ -12,10 +12,10 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   const parsed = lessonPatchSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: firstError(parsed.error) }, { status: 400 });
   if (parsed.data.studentId && !(await getStudent(userId, parsed.data.studentId))) {
-    return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Ο μαθητής δεν βρέθηκε' }, { status: 404 });
   }
   const lesson = await updateLesson(userId, id, parsed.data);
-  if (!lesson) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!lesson) return NextResponse.json({ error: 'Δεν βρέθηκε' }, { status: 404 });
   return NextResponse.json(lesson);
 }
 
@@ -23,6 +23,6 @@ export async function DELETE(request: NextRequest, { params }: Ctx) {
   const id = Number((await params).id);
   const series = request.nextUrl.searchParams.get('series') === 'future' ? 'future' : undefined;
   const count = await deleteLesson(getUserId(request), id, series);
-  if (count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (count === 0) return NextResponse.json({ error: 'Δεν βρέθηκε' }, { status: 404 });
   return NextResponse.json({ ok: true, count });
 }

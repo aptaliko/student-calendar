@@ -29,17 +29,17 @@ export default function MonthlyChart({
     <div className="card-surface p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-bold">{measure === 'income' ? 'Income by month' : 'Hours taught by month'}</h2>
+          <h2 className="font-bold">{measure === 'income' ? 'Έσοδα ανά μήνα' : 'Ώρες διδασκαλίας ανά μήνα'}</h2>
           <p className="text-sm text-base-content/55 tabular">
-            Avg {measure === 'income' ? formatMoney(Math.round(total / Math.max(1, nonEmpty)), currency) : formatHours(Math.round(total / Math.max(1, nonEmpty)))} per active month
+            Μ.Ο. {measure === 'income' ? formatMoney(Math.round(total / Math.max(1, nonEmpty)), currency) : formatHours(Math.round(total / Math.max(1, nonEmpty)))} ανά ενεργό μήνα
           </p>
         </div>
         <div role="tablist" className="tabs tabs-box tabs-sm">
           <button role="tab" className={`tab ${measure === 'income' ? 'tab-active' : ''}`} onClick={() => setMeasure('income')}>
-            Income
+            Έσοδα
           </button>
           <button role="tab" className={`tab ${measure === 'hours' ? 'tab-active' : ''}`} onClick={() => setMeasure('hours')}>
-            Hours
+            Ώρες
           </button>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default function MonthlyChart({
                 <div className="absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded-field bg-neutral px-3 py-2 text-xs whitespace-nowrap text-neutral-content shadow-lg">
                   <div className="font-semibold">{shortMonth(`${p.month}-01`)}</div>
                   <div className="tabular">{formatMoney(p.earnedCents, currency)} · {formatHours(p.attendedMinutes)}</div>
-                  <div className="opacity-70">{p.lessons} lessons</div>
+                  <div className="opacity-70">{p.lessons} μαθήματα</div>
                 </div>
               )}
             </Link>
@@ -82,7 +82,7 @@ export default function MonthlyChart({
       <div className="mt-2 flex gap-1.5 sm:gap-3">
         {data.map((p) => (
           <div key={p.month} className={`flex-1 text-center text-[10px] sm:text-xs ${p.month === highlight ? 'font-bold text-primary' : 'text-base-content/50'}`}>
-            {shortMonth(`${p.month}-01`).slice(0, 3)}
+            {shortMonth(`${p.month}-01`)}
           </div>
         ))}
       </div>

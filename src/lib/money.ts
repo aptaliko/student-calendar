@@ -1,16 +1,20 @@
 export const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'AUD'] as const;
 
+const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', GBP: '£', CHF: 'CHF', CAD: 'CA$', AUD: 'A$' };
+
+export const currencySymbol = (currency: string) => SYMBOLS[currency] ?? currency;
+
+/** Greek number formatting by hand (1.234,50) — Intl output differs between Node and browsers. */
+function greekNumber(value: number, decimals: number): string {
+  const [int, frac] = Math.abs(value).toFixed(decimals).split('.');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${value < 0 ? '−' : ''}${grouped}${frac ? `,${frac}` : ''}`;
+}
+
+/** '1.234,50 €' (compact drops ',00' on whole amounts). */
 export function formatMoney(cents: number, currency: string, opts: { compact?: boolean } = {}): string {
-  try {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: opts.compact && cents % 100 === 0 ? 0 : 2,
-      maximumFractionDigits: 2,
-    }).format(cents / 100);
-  } catch {
-    return `${(cents / 100).toFixed(2)} ${currency}`;
-  }
+  const decimals = opts.compact && cents % 100 === 0 ? 0 : 2;
+  return `${greekNumber(cents / 100, decimals)} ${SYMBOLS[currency] ?? currency}`;
 }
 
 /** Lesson price from an hourly rate, rounded to whole cents. */
@@ -29,7 +33,8 @@ export function centsToInput(cents: number): string {
   return cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
 }
 
+/** '1,5 ώρ.' */
 export function formatHours(minutes: number): string {
   const h = minutes / 60;
-  return `${Number.isInteger(h) ? h : h.toFixed(1)}h`;
+  return `${greekNumber(h, Number.isInteger(h) ? 0 : 1)} ώρ.`;
 }
