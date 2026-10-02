@@ -122,6 +122,9 @@ const parts = (iso: ISODate) => {
   return { y: iso.slice(0, 4), m, day: Number(iso.slice(8, 10)), wd: weekdayIndex(iso) };
 };
 
+/** 'Τρίτη' — reads right after 'κάθε' too (κάθε Τρίτη, κάθε Σάββατο). */
+export const weekdayName = (iso: ISODate) => WEEKDAYS[weekdayIndex(iso)];
+
 export const monthLabel = (iso: ISODate) => `${MONTHS[parts(iso).m]} ${parts(iso).y}`;
 export const shortMonth = (iso: ISODate) => MONTHS_SHORT[parts(iso).m];
 /** 'Παρασκευή 2 Οκτωβρίου' */

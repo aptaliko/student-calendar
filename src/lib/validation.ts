@@ -39,7 +39,9 @@ export const lessonSchema = z.object({
 });
 
 export const lessonCreateSchema = lessonSchema.extend({
-  repeatWeeks: z.number().int().min(1).max(52).default(1),
+  repeatWeeks: z.number().int().min(1).max(104).default(1),
+  /** Weekly until this date (inclusive); takes precedence over repeatWeeks. */
+  repeatUntil: isoDate.optional(),
 });
 
 export const lessonPatchSchema = lessonSchema.partial();

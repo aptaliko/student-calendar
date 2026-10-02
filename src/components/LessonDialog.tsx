@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { Repeat, Trash2, UserPlus } from 'lucide-react';
 import type { Lesson, LessonStatus, Student } from '@/db/schema';
 import { api } from '@/lib/api';
-import { LESSON_STATUS_ORDER, STATUS_META, colorOf } from '@/lib/lessons';
+import { LESSON_STATUS_ORDER, MAX_SERIES_LESSONS, STATUS_META, colorOf, seriesDates, seriesDatesUntil } from '@/lib/lessons';
+import { dayMonth, weekdayName } from '@/lib/dates';
 import { centsToInput, formatMoney, parseMoney, priceFor, currencySymbol } from '@/lib/money';
 import Avatar from './Avatar';
 import Modal from './Modal';
@@ -51,6 +52,9 @@ export default function LessonDialog({
   const [notes, setNotes] = useState(lesson?.notes ?? '');
   const [repeat, setRepeat] = useState(false);
   const [weeks, setWeeks] = useState(8);
+  const [repeatMode, setRepeatMode] = useState<'until' | 'count'>('until');
+  // Default end: 31 December of the first lesson's year.
+  const [until, setUntil] = useState(`${(lesson?.date ?? defaults?.date ?? prefs.today).slice(0, 4)}-12-31`);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,11 +62,17 @@ export default function LessonDialog({
   const autoPrice = student ? priceFor(student.hourlyRateCents, duration) : 0;
   const priceCents = priceTouched ? parseMoney(price) : autoPrice;
   const charged = STATUS_META[status].charged;
+  const untilCount = repeat && repeatMode === 'until' ? seriesDatesUntil(date, until).length : 0;
+  const seriesCount = !repeat ? 1 : repeatMode === 'until' ? untilCount : weeks;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!studentId) return setError('Επιλέξτε μαθητή');
     if (priceCents === null) return setError('Συμπληρώστε έγκυρη τιμή');
+    if (!lesson && repeat && repeatMode === 'until') {
+      if (untilCount === 0) return setError('Η ημερομηνία λήξης είναι πριν από το πρώτο μάθημα');
+      if (untilCount > MAX_SERIES_LESSONS) return setError(`Έως ${MAX_SERIES_LESSONS} μαθήματα τη φορά — επιλέξτε πιο κοντινή ημερομηνία`);
+    }
     setSaving(true);
     setError(null);
     const body = {
@@ -81,7 +91,8 @@ export default function LessonDialog({
         await api(`/api/lessons/${lesson.id}`, 'PATCH', body);
         toast('Το μάθημα ενημερώθηκε');
       } else {
-        const created = await api<Lesson[]>('/api/lessons', 'POST', { ...body, repeatWeeks: repeat ? weeks : 1 });
+        const series = !repeat ? { repeatWeeks: 1 } : repeatMode === 'until' ? { repeatUntil: until } : { repeatWeeks: weeks };
+        const created = await api<Lesson[]>('/api/lessons', 'POST', { ...body, ...series });
         toast(created.length > 1 ? `Προγραμματίστηκαν ${created.length} εβδομαδιαία μαθήματα` : 'Το μάθημα προγραμματίστηκε');
       }
       onSaved();
@@ -138,7 +149,7 @@ export default function LessonDialog({
           )}
           <div className="mr-auto pl-1 text-sm text-base-content/60 tabular">
             {priceCents !== null && formatMoney(priceCents, prefs.currency)}
-            {!lesson && repeat && ` × ${weeks}`}
+            {!lesson && repeat && ` × ${seriesCount}`}
           </div>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             Ακύρωση
@@ -154,7 +165,15 @@ export default function LessonDialog({
         {/* Student */}
         <section>
           <span className="mb-2 block text-sm font-medium">Μαθητής</span>
-          {active.length === 0 ? (
+          {lesson ? (
+            // An existing lesson belongs to its student; don't offer the whole class list.
+            student && (
+              <span className={`inline-flex items-center gap-2 rounded-full border-2 py-1 pr-3 pl-1 text-sm font-semibold ${colorOf(student.color).soft} ${colorOf(student.color).border}`}>
+                <Avatar name={student.name} color={student.color} size="sm" />
+                {student.name}
+              </span>
+            )
+          ) : active.length === 0 ? (
             <button type="button" onClick={onAddStudent} className="btn btn-outline btn-primary w-full">
               <UserPlus className="size-4" /> Προσθέστε τον πρώτο σας μαθητή
             </button>
@@ -275,18 +294,42 @@ export default function LessonDialog({
               <input type="checkbox" className="toggle toggle-primary" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} />
             </label>
             {repeat && (
-              <label className="mt-3 flex items-center gap-3 text-sm">
-                <span className="flex-1">Αριθμός μαθημάτων</span>
-                <input
-                  type="range"
-                  min={2}
-                  max={52}
-                  value={weeks}
-                  onChange={(e) => setWeeks(Number(e.target.value))}
-                  className="range range-primary range-xs w-40"
-                />
-                <span className="w-8 text-right font-semibold tabular">{weeks}</span>
-              </label>
+              <div className="mt-3 space-y-3 text-sm">
+                <div role="tablist" className="tabs tabs-box tabs-sm w-fit bg-base-100">
+                  <button type="button" role="tab" className={`tab ${repeatMode === 'until' ? 'tab-active' : ''}`} onClick={() => setRepeatMode('until')}>
+                    Μέχρι ημερομηνία
+                  </button>
+                  <button type="button" role="tab" className={`tab ${repeatMode === 'count' ? 'tab-active' : ''}`} onClick={() => setRepeatMode('count')}>
+                    Αριθμός μαθημάτων
+                  </button>
+                </div>
+                {repeatMode === 'until' ? (
+                  <label className="flex items-center gap-3">
+                    <span className="flex-1">Κάθε {weekdayName(date)} μέχρι</span>
+                    <input type="date" className="input input-sm w-44" value={until} min={date} onChange={(e) => setUntil(e.target.value)} />
+                  </label>
+                ) : (
+                  <label className="flex items-center gap-3">
+                    <span className="flex-1">Κάθε {weekdayName(date)}, μαθήματα</span>
+                    <input
+                      type="range"
+                      min={2}
+                      max={52}
+                      value={weeks}
+                      onChange={(e) => setWeeks(Number(e.target.value))}
+                      className="range range-primary range-xs w-32"
+                    />
+                    <span className="w-8 text-right font-semibold tabular">{weeks}</span>
+                  </label>
+                )}
+                <p className={`text-xs ${repeatMode === 'until' && (untilCount === 0 || untilCount > MAX_SERIES_LESSONS) ? 'text-error' : 'text-base-content/60'}`}>
+                  {repeatMode === 'until' && untilCount === 0
+                    ? 'Η ημερομηνία λήξης είναι πριν από το πρώτο μάθημα.'
+                    : repeatMode === 'until' && untilCount > MAX_SERIES_LESSONS
+                      ? `Πάνω από ${MAX_SERIES_LESSONS} μαθήματα — επιλέξτε πιο κοντινή ημερομηνία.`
+                      : `Θα δημιουργηθούν ${seriesCount} μαθήματα, από ${dayMonth(date)} έως ${dayMonth(repeatMode === 'until' ? seriesDatesUntil(date, until).at(-1)! : seriesDates(date, weeks).at(-1)!, true)}.`}
+                </p>
+              </div>
             )}
           </section>
         )}
