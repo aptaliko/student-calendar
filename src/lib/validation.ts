@@ -51,7 +51,11 @@ export const paymentSchema = z.object({
   amountCents: cents.refine((v) => v > 0, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
   method: z.enum(PAYMENT_METHODS).default('cash'),
   notes: optionalText,
-  lessonIds: z.array(z.number().int().positive()).min(1, 'Επιλέξτε τουλάχιστον ένα μάθημα').max(500),
+  /** Lessons to pay now; empty = pure prepayment. Ignored for packages. */
+  lessonIds: z.array(z.number().int().positive()).max(500).default([]),
+  shortfall: z.enum(['discount', 'oldest']).default('discount'),
+  /** Package of N lessons; null = money payment/prepayment. */
+  lessonCount: z.number().int().min(1).max(200).nullable().default(null),
 });
 
 export const accountSchema = z.object({

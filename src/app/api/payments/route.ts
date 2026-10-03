@@ -23,9 +23,6 @@ export async function POST(request: NextRequest) {
   if (!(await getStudent(userId, parsed.data.studentId))) {
     return NextResponse.json({ error: 'Ο μαθητής δεν βρέθηκε' }, { status: 404 });
   }
-  const payment = await createPayment(userId, parsed.data);
-  if (!payment) {
-    return NextResponse.json({ error: 'Τα επιλεγμένα μαθήματα έχουν ήδη πληρωθεί' }, { status: 409 });
-  }
-  return NextResponse.json(payment, { status: 201 });
+  const result = await createPayment(userId, parsed.data);
+  return NextResponse.json(result, { status: 201 });
 }

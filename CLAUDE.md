@@ -18,12 +18,17 @@ HMAC-signed cookie auth, vitest.
 - `priceCents` is a snapshot per lesson, so changing a student's rate never rewrites history.
 - Status semantics (`src/lib/lessons.ts`): `attended` and `no_show` are charged; `excused`,
   `cancelled` and `scheduled` are not. All report math is in `src/lib/reports.ts` (unit tested).
-- Payments (`payments` table, `src/db/queries/payments.ts`) cover one or more lessons via
-  `lessons.paymentId`; recording one marks its lessons `paid`, deleting it un-marks them. The
-  amount may differ from the lessons' sum (discount) and is split across them into
-  `lessons.paidCents` (`allocatePayment`). Payments have no date: money counts towards the
-  month of the lessons it pays for, so "collected" for a month = sum of `paidCents ?? priceCents`
-  over that month's paid lessons. "Settle" creates a payment for the full balance.
+- Payments (`payments`, `payment_allocations`; `src/db/queries/payments.ts`, rules in
+  `src/lib/payments.ts`). A payment has no date; `payment_allocations` record which lessons it
+  paid and how much, so money counts towards the month of those lessons. Unallocated money is
+  prepayment credit; with `lessonCount` the payment is a package (equal share per lesson).
+  Invariant: `applyCredit` runs whenever credit or charged lessons change, spending credit on
+  charged unpaid lessons oldest first (oldest payment first); a lesson can be partly paid.
+  Un-charging/deleting a lesson or deleting a payment releases allocations back to credit.
+  `lessons.paid` = fully settled (by payments, possibly at a discount, or ticked by hand —
+  then it has no allocations and its full price counts). Report math: `src/lib/reports.ts`.
+- Raw SQL subqueries must name tables explicitly (see `allocatedCentsSql`): in single-table
+  selects drizzle renders columns unqualified, so a bare "id" binds to the inner table.
 - Every query is scoped by `ownerId`. `src/proxy.ts` verifies the session cookie and sets
   `x-user-id` for route handlers (`getUserId`); server components use `requireUser()`.
 - The UI is Greek only (`<html lang="el">`); strings live inline in the components, like in

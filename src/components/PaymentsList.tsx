@@ -3,32 +3,42 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HandCoins, Trash2 } from 'lucide-react';
-import type { PaymentWithCount } from '@/db/queries/payments';
+import type { PaymentWithUsage } from '@/db/queries/payments';
 import { api } from '@/lib/api';
 import { dayMonth } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
-import { PAYMENT_METHOD_LABELS } from '@/lib/payments';
+import { PAYMENT_METHOD_LABELS, remainingCredit } from '@/lib/payments';
 import Avatar from './Avatar';
 import { EmptyState } from './Card';
 import { useEditors } from './Editors';
 import { useToast } from './Toast';
 
-/** '3 Σεπ – 24 Σεπ' — the lessons a payment covers. */
-function coverage(p: PaymentWithCount): string {
+/** '3 Σεπ – 24 Σεπ' — the lessons a payment has paid for so far. */
+function coverage(p: PaymentWithUsage): string {
   if (!p.firstDate || !p.lastDate) return '';
   return p.firstDate === p.lastDate ? dayMonth(p.firstDate) : `${dayMonth(p.firstDate)} – ${dayMonth(p.lastDate)}`;
 }
 
-export default function PaymentsList({ payments, showStudent = true }: { payments: PaymentWithCount[]; showStudent?: boolean }) {
+const lessonsWord = (n: number) => `${n} ${n === 1 ? 'μάθημα' : 'μαθήματα'}`;
+
+/** 'Πακέτο 10 μαθημάτων · 3 χρησιμοποιήθηκαν (1 Οκτ – 15 Οκτ)' / '4 μαθήματα (3 Σεπ – 24 Σεπ)' */
+function describe(p: PaymentWithUsage): string {
+  const used = p.allocatedLessons ? ` (${coverage(p)})` : '';
+  if (p.lessonCount !== null) return `${p.allocatedLessons}/${p.lessonCount} χρησιμοποιήθηκαν${used}`;
+  return p.allocatedLessons ? `${lessonsWord(p.allocatedLessons)}${used}` : 'δεν έχει χρησιμοποιηθεί ακόμη';
+}
+
+export default function PaymentsList({ payments, showStudent = true }: { payments: PaymentWithUsage[]; showStudent?: boolean }) {
   const { students, prefs } = useEditors();
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState<number | null>(null);
   const byId = new Map(students.map((s) => [s.id, s]));
 
-  async function remove(p: PaymentWithCount) {
-    const lessons = p.lessonCount === 1 ? 'Το 1 μάθημα θα σημειωθεί' : `Τα ${p.lessonCount} μαθήματα θα σημειωθούν`;
-    if (!confirm(`Διαγραφή πληρωμής ${formatMoney(p.amountCents, prefs.currency)}; ${lessons} ξανά ως απλήρωτα.`)) return;
+  async function remove(p: PaymentWithUsage) {
+    const n = p.allocatedLessons;
+    const lessons = n === 0 ? '' : n === 1 ? ' Το 1 μάθημα που πλήρωσε θα σημειωθεί ξανά ως απλήρωτο.' : ` Τα ${n} μαθήματα που πλήρωσε θα σημειωθούν ξανά ως απλήρωτα.`;
+    if (!confirm(`Διαγραφή πληρωμής ${formatMoney(p.amountCents, prefs.currency)};${lessons}`)) return;
     setBusy(p.id);
     try {
       await api(`/api/payments/${p.id}`, 'DELETE');
@@ -60,13 +70,23 @@ export default function PaymentsList({ payments, showStudent = true }: { payment
             )}
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">
-                {showStudent ? (s?.name ?? 'Διαγραμμένος') : `Μαθήματα ${coverage(p)}`}
+                {showStudent ? (s?.name ?? 'Διαγραμμένος') : p.lessonCount !== null ? `Πακέτο ${lessonsWord(p.lessonCount)}` : p.allocatedLessons ? `Μαθήματα ${coverage(p)}` : 'Προπληρωμή'}
               </span>
               <span className="block truncate text-xs text-base-content/55">
-                {p.lessonCount} {p.lessonCount === 1 ? 'μάθημα' : 'μαθήματα'}
-                {showStudent && ` (${coverage(p)})`} · {PAYMENT_METHOD_LABELS[p.method]}
+                {describe(p)} · {PAYMENT_METHOD_LABELS[p.method]}
                 {p.notes && ` · ${p.notes}`}
               </span>
+              {(() => {
+                const left = remainingCredit(p);
+                if (p.lessonCount !== null ? !left.lessons : left.cents <= 0) return null;
+                return (
+                  <span className="mt-0.5 inline-block rounded-full bg-info/15 px-2 py-0.5 text-[11px] font-semibold text-info">
+                    {p.lessonCount !== null
+                      ? `Απομένουν ${lessonsWord(left.lessons ?? 0)} (${formatMoney(left.cents, prefs.currency)})`
+                      : `Υπόλοιπο προπληρωμής ${formatMoney(left.cents, prefs.currency)}`}
+                  </span>
+                );
+              })()}
             </span>
             <span className="font-semibold text-success tabular">+{formatMoney(p.amountCents, prefs.currency)}</span>
             <button

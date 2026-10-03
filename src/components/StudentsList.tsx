@@ -15,6 +15,7 @@ type Row = {
   student: Student;
   monthMinutes: number;
   outstandingCents: number;
+  creditCents: number;
   attendanceRate: number | null;
   next: string | null;
 };
@@ -61,7 +62,7 @@ export default function StudentsList({ rows }: { rows: Row[] }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map(({ student: s, monthMinutes, outstandingCents, attendanceRate, next }) => (
+        {filtered.map(({ student: s, monthMinutes, outstandingCents, creditCents, attendanceRate, next }) => (
           <Link
             key={s.id}
             href={`/students/${s.id}`}
@@ -87,12 +88,19 @@ export default function StudentsList({ rows }: { rows: Row[] }) {
                 <div className="font-bold tabular">{attendanceRate === null ? '—' : `${Math.round(attendanceRate * 100)}%`}</div>
                 <div className="text-[11px] text-base-content/50">παρουσίες</div>
               </div>
-              <div>
-                <div className={`font-bold tabular ${outstandingCents > 0 ? 'text-warning' : ''}`}>
-                  {formatMoney(outstandingCents, prefs.currency, { compact: true })}
+              {outstandingCents === 0 && creditCents > 0 ? (
+                <div>
+                  <div className="font-bold text-info tabular">+{formatMoney(creditCents, prefs.currency, { compact: true })}</div>
+                  <div className="text-[11px] text-base-content/50">προπληρωμή</div>
                 </div>
-                <div className="text-[11px] text-base-content/50">οφειλή</div>
-              </div>
+              ) : (
+                <div>
+                  <div className={`font-bold tabular ${outstandingCents > 0 ? 'text-warning' : ''}`}>
+                    {formatMoney(outstandingCents, prefs.currency, { compact: true })}
+                  </div>
+                  <div className="text-[11px] text-base-content/50">οφειλή</div>
+                </div>
+              )}
             </div>
           </Link>
         ))}

@@ -29,11 +29,15 @@ describe('reports', () => {
     expect(t.attendanceRate).toBeCloseTo(1 / 3);
   });
 
-  it('counts a lesson\'s share of a discounted payment as collected', () => {
-    const t = totals([L({ paid: true, paidCents: 2000 }), L({ paid: true, paidCents: null }), L({ paid: false })]);
+  it('counts payment shares as collected, and only the rest of a partly paid lesson as owed', () => {
+    const t = totals([
+      L({ paid: true, allocatedCents: 2000 }), // paid at a discount
+      L({ paid: true }), // ticked paid by hand: full price
+      L({ paid: false, allocatedCents: 1000 }), // 10 € left from a prepayment
+    ]);
     expect(t.earnedCents).toBe(9000);
-    expect(t.paidCents).toBe(5000);
-    expect(t.outstandingCents).toBe(3000);
+    expect(t.paidCents).toBe(6000);
+    expect(t.outstandingCents).toBe(2000);
   });
 
   it('has no attendance rate before anything is marked', () => {

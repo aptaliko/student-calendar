@@ -34,9 +34,10 @@ export const students = pgTable(
 export const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'other'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
-// A payment received from a student, covering one or more lessons. It has no date of its own:
-// money counts towards the month of the lessons it pays for. The amount can differ from the
-// lessons' sum (discount); it is split across them into `lessons.paidCents`.
+// Money received from a student. It has no date of its own: it counts towards the month of the
+// lessons it pays for, through `payment_allocations`. Whatever is not allocated yet is credit
+// (prepayment) that is spent automatically, oldest lesson first, as lessons become charged.
+// With `lessonCount` it is a package ("10 lessons for 230 €"): each lesson uses an equal share.
 export const payments = pgTable(
   'payments',
   {
@@ -45,6 +46,7 @@ export const payments = pgTable(
     studentId: integer('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
     amountCents: integer('amount_cents').notNull(),
     method: text('method').$type<PaymentMethod>().notNull().default('cash'),
+    lessonCount: integer('lesson_count'),
     notes: text('notes'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
@@ -73,12 +75,9 @@ export const lessons = pgTable(
     // Price snapshot for this lesson, so later rate changes don't rewrite history.
     priceCents: integer('price_cents').notNull(),
     status: text('status').$type<LessonStatus>().notNull().default('scheduled'),
+    // Fully settled. Set by payments (possibly at a discount) or ticked by hand; a lesson ticked
+    // by hand with no allocations counts its full price as collected.
     paid: boolean('paid').notNull().default(false),
-    // Set when the lesson was paid as part of a recorded payment; null when toggled paid by hand.
-    paymentId: integer('payment_id').references(() => payments.id, { onDelete: 'set null' }),
-    // This lesson's share of its payment (differs from priceCents after a discount). Null when
-    // unpaid or ticked paid by hand, in which case the full priceCents counts as paid.
-    paidCents: integer('paid_cents'),
     topic: text('topic'),
     notes: text('notes'),
     // Shared by lessons created together as a weekly series.
@@ -86,6 +85,19 @@ export const lessons = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (t) => [index('lessons_owner_date_idx').on(t.ownerId, t.date), index('lessons_student_idx').on(t.studentId)],
+);
+
+// Which payment paid how much of which lesson. A lesson can be paid by several payments
+// (e.g. the last 10 € of a prepayment plus 15 € from the next one).
+export const paymentAllocations = pgTable(
+  'payment_allocations',
+  {
+    id: serial('id').primaryKey(),
+    paymentId: integer('payment_id').notNull().references(() => payments.id, { onDelete: 'cascade' }),
+    lessonId: integer('lesson_id').notNull().references(() => lessons.id, { onDelete: 'cascade' }),
+    amountCents: integer('amount_cents').notNull(),
+  },
+  (t) => [index('payment_allocations_payment_idx').on(t.paymentId), index('payment_allocations_lesson_idx').on(t.lessonId)],
 );
 
 export type User = typeof users.$inferSelect;
