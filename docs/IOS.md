@@ -18,13 +18,21 @@ with every commit so work can continue from any machine.
 
 - [x] 1. Progress log (this file)
 - [x] 2. iPhone fixes: no auto-zoom on inputs, safe areas (notch / home bar), no tap delay
-- [ ] 3. Home Screen web app: manifest, apple-touch-icon, standalone mode, status bar
+- [x] 3. Home Screen web app: manifest, apple-touch-icon, standalone mode, status bar
 - [ ] 4. Capacitor setup: packages + `capacitor.config.ts` pointing at the production URL
 - [ ] 5. `ios/` Xcode project generated and committed
 - [ ] 6. Build & install instructions (Mac + Xcode + iPhone)
+
+## How to install today (step 3 done)
+
+On the iPhone, open the site in **Safari** → Share button → **Add to Home Screen** → Add.
+It opens full screen with its own icon ("Μαθήματα"), no Safari bars. Updates arrive with
+every deploy; nothing to reinstall.
 
 ## Notes / decisions
 
 - The app is server-rendered (Next.js on Vercel), so the iOS wrapper loads the live site
   instead of bundling it. It needs internet, like the website.
 - Production URL for the wrapper is set in `capacitor.config.ts` (see step 4).
+- Icons: `public/icons/*.png` were rendered from `public/icon.svg` (full-bleed, iOS rounds
+  the corners). `src/proxy.ts` lets `/icons/*` and `/manifest.webmanifest` load without login.

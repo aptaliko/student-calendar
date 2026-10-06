@@ -10,6 +10,10 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: { default: "Ημερολόγιο Μαθητών", template: "%s · Ημερολόγιο Μαθητών" },
   description: "Προγραμματίστε μαθήματα, καταγράψτε παρουσίες και δείτε τα έσοδά σας — για ιδιαίτερους καθηγητές.",
+  // Home Screen app on iPhone: full screen, own icon and name.
+  appleWebApp: { capable: true, title: "Μαθήματα", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
