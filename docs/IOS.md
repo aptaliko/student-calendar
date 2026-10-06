@@ -21,13 +21,47 @@ with every commit so work can continue from any machine.
 - [x] 3. Home Screen web app: manifest, apple-touch-icon, standalone mode, status bar
 - [x] 4. Capacitor setup: packages + `capacitor.config.ts` pointing at the production URL
 - [x] 5. `ios/` Xcode project generated and committed (app icon + launch screen set)
-- [ ] 6. Build & install instructions (Mac + Xcode + iPhone)
+- [x] 6. Build & install instructions (Mac + Xcode + iPhone) — below
 
 ## How to install today (step 3 done)
 
 On the iPhone, open the site in **Safari** → Share button → **Add to Home Screen** → Add.
 It opens full screen with its own icon ("Μαθήματα"), no Safari bars. Updates arrive with
 every deploy; nothing to reinstall.
+
+## Build & install the iOS app (needs a Mac)
+
+A Windows/Linux PC can't build iOS apps — use the Home Screen option above there.
+
+One-time setup on the Mac:
+1. Install **Xcode** from the Mac App Store, open it once, and let it install its components.
+2. Xcode → Settings → **Accounts** → `+` → add your Apple ID (a free one is fine).
+3. On the iPhone: Settings → Privacy & Security → **Developer Mode** → on (it restarts).
+
+Build and install:
+```bash
+git clone https://github.com/aptaliko/student-calendar.git && cd student-calendar
+npm install
+npm run ios:sync      # writes ios/App/App/capacitor.config.json (git-ignored)
+npm run ios:open      # opens the project in Xcode
+```
+4. In Xcode select the **App** target → **Signing & Capabilities** → Team: your
+   "(Personal Team)". If Xcode says the bundle id is taken, change
+   `com.aptaliko.studentcalendar` to something unique (e.g. add your initials).
+5. Connect the iPhone with a cable, tap **Trust** on the phone, pick it as the run
+   destination at the top of Xcode, and press **▶ Run**.
+6. First launch only: on the iPhone, Settings → General → **VPN & Device Management** →
+   your Apple ID → Trust.
+
+With a free Apple ID the app stops opening after **7 days**; plug in and press Run again
+(your data is on the server, nothing is lost). A paid Apple Developer account (99 $/year)
+makes it last a year. Web changes need no reinstall — the app loads the live site.
+
+## Next ideas (not started)
+
+- Native touches via Capacitor plugins: haptic feedback on marking attendance, status bar
+  colour, pull-to-refresh.
+- Test on a real iPhone and list remaining pain points here.
 
 ## Notes / decisions
 
