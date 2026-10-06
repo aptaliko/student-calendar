@@ -19,7 +19,7 @@ with every commit so work can continue from any machine.
 - [x] 1. Progress log (this file)
 - [x] 2. iPhone fixes: no auto-zoom on inputs, safe areas (notch / home bar), no tap delay
 - [x] 3. Home Screen web app: manifest, apple-touch-icon, standalone mode, status bar
-- [ ] 4. Capacitor setup: packages + `capacitor.config.ts` pointing at the production URL
+- [x] 4. Capacitor setup: packages + `capacitor.config.ts` pointing at the production URL
 - [ ] 5. `ios/` Xcode project generated and committed
 - [ ] 6. Build & install instructions (Mac + Xcode + iPhone)
 
@@ -33,6 +33,9 @@ every deploy; nothing to reinstall.
 
 - The app is server-rendered (Next.js on Vercel), so the iOS wrapper loads the live site
   instead of bundling it. It needs internet, like the website.
-- Production URL for the wrapper is set in `capacitor.config.ts` (see step 4).
+- The wrapper loads `https://student-calendar-nu.vercel.app` (`capacitor.config.ts`,
+  override with `CAP_SERVER_URL`). If it can't be reached at start-up it shows
+  `capacitor-www/index.html` ("Δεν υπάρχει σύνδεση" + retry). App id
+  `com.aptaliko.studentcalendar`, name "Μαθήματα".
 - Icons: `public/icons/*.png` were rendered from `public/icon.svg` (full-bleed, iOS rounds
   the corners). `src/proxy.ts` lets `/icons/*` and `/manifest.webmanifest` load without login.
