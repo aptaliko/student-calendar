@@ -20,7 +20,7 @@ with every commit so work can continue from any machine.
 - [x] 2. iPhone fixes: no auto-zoom on inputs, safe areas (notch / home bar), no tap delay
 - [x] 3. Home Screen web app: manifest, apple-touch-icon, standalone mode, status bar
 - [x] 4. Capacitor setup: packages + `capacitor.config.ts` pointing at the production URL
-- [ ] 5. `ios/` Xcode project generated and committed
+- [x] 5. `ios/` Xcode project generated and committed (app icon + launch screen set)
 - [ ] 6. Build & install instructions (Mac + Xcode + iPhone)
 
 ## How to install today (step 3 done)
@@ -37,5 +37,8 @@ every deploy; nothing to reinstall.
   override with `CAP_SERVER_URL`). If it can't be reached at start-up it shows
   `capacitor-www/index.html` ("Δεν υπάρχει σύνδεση" + retry). App id
   `com.aptaliko.studentcalendar`, name "Μαθήματα".
+- `ios/` was generated with `npx cap add ios` (Capacitor 8, Swift Package Manager — no
+  CocoaPods). Icon/launch images in `ios/App/App/Assets.xcassets` were rendered from
+  `public/icon.svg`. After changing `capacitor.config.ts` run `npm run ios:sync`.
 - Icons: `public/icons/*.png` were rendered from `public/icon.svg` (full-bleed, iOS rounds
   the corners). `src/proxy.ts` lets `/icons/*` and `/manifest.webmanifest` load without login.
