@@ -17,8 +17,7 @@ with every commit so work can continue from any machine.
 ## Checklist
 
 - [x] 1. Progress log (this file)
-- [ ] 2. iPhone fixes: no auto-zoom on inputs, safe areas (notch / home bar), dialogs usable
-       with the keyboard open, bigger tap targets
+- [x] 2. iPhone fixes: no auto-zoom on inputs, safe areas (notch / home bar), no tap delay
 - [ ] 3. Home Screen web app: manifest, apple-touch-icon, standalone mode, status bar
 - [ ] 4. Capacitor setup: packages + `capacitor.config.ts` pointing at the production URL
 - [ ] 5. `ios/` Xcode project generated and committed
