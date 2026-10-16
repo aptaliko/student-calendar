@@ -29,5 +29,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.svg).*)'],
+  // Static assets the browser/iOS fetch without a session (icons, manifest).
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.svg|icons/|manifest.webmanifest).*)'],
 };

@@ -13,9 +13,12 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "dotenv -e .env.local -- tsx scripts/migrate.ts",
-    "db:seed:dev": "dotenv -e .env.local -- tsx scripts/seed-dev.ts"
+    "db:seed:dev": "dotenv -e .env.local -- tsx scripts/seed-dev.ts",
+    "ios:sync": "cap sync ios",
+    "ios:open": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.2",
     "@neondatabase/serverless": "^1.1.0",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.50.0",
@@ -29,6 +32,8 @@
     "eslint-plugin-react-hooks": "7.1.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^26.4.0",
     "@types/react": "^19",

@@ -21,6 +21,16 @@ export function seriesDates(first: ISODate, count: number, everyWeeks = 1): ISOD
   return Array.from({ length: count }, (_, i) => addDays(first, i * 7 * everyWeeks));
 }
 
+/** Most lessons one series may create (two school years of weekly lessons). */
+export const MAX_SERIES_LESSONS = 104;
+
+/** Weekly dates from `first` up to and including `until` (same weekday as `first`). */
+export function seriesDatesUntil(first: ISODate, until: ISODate, everyWeeks = 1): ISODate[] {
+  const out: ISODate[] = [];
+  for (let d = first; d <= until && out.length <= MAX_SERIES_LESSONS; d = addDays(d, 7 * everyWeeks)) out.push(d);
+  return out;
+}
+
 // Student colors. Full class strings live here so Tailwind's scanner sees them.
 export const STUDENT_COLORS = {
   violet: { bg: 'bg-violet-500', soft: 'bg-violet-500/15', text: 'text-violet-600 dark:text-violet-300', border: 'border-violet-500' },

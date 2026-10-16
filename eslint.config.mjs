@@ -20,6 +20,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated Capacitor iOS shell — not our source to lint.
+    "ios/**",
   ]),
 ]);
 

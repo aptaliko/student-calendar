@@ -45,8 +45,8 @@ function LessonRowInner({
   async function patch(data: Partial<Pick<Lesson, 'status' | 'paid'>>, message: string) {
     setOptimistic((o) => ({ ...o, ...data }));
     try {
-      await api(`/api/lessons/${lesson.id}`, 'PATCH', data);
-      toast(message);
+      const res = await api<{ paidFromCredit?: boolean }>(`/api/lessons/${lesson.id}`, 'PATCH', data);
+      toast(res.paidFromCredit ? `${message} · πληρώθηκε από προπληρωμή 💸` : message);
       startTransition(() => router.refresh());
     } catch (err) {
       setOptimistic({});

@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCheck, PartyPopper } from 'lucide-react';
-import type { Lesson, PaymentMethod, Student } from '@/db/schema';
+import { CheckCheck, Info } from 'lucide-react';
+import type { PaymentMethod, Student } from '@/db/schema';
 import { PAYMENT_METHODS } from '@/db/schema';
+import type { LessonWithPaid } from '@/db/queries/lessons';
+import type { PaymentResult } from '@/db/queries/payments';
 import { api } from '@/lib/api';
 import { monthLabel, shortDay } from '@/lib/dates';
 import { colorOf } from '@/lib/lessons';
 import { centsToInput, currencySymbol, formatMoney, parseMoney } from '@/lib/money';
-import { PAYMENT_METHOD_LABELS } from '@/lib/payments';
+import { PAYMENT_METHOD_LABELS, packageShare } from '@/lib/payments';
 import Avatar from './Avatar';
 import Modal from './Modal';
 import StatusBadge from './StatusBadge';
@@ -16,7 +18,10 @@ import { useToast } from './Toast';
 import type { Prefs } from './Editors';
 
 /** `from`/`to` (e.g. the report's month) pre-select only the unpaid lessons in that range. */
-export type PaymentDefaults = { studentId?: number; from?: string; to?: string };
+export type PaymentDefaults = { studentId?: number; from?: string; to?: string; mode?: 'lessons' | 'package' };
+
+const due = (l: LessonWithPaid) => Math.max(0, l.priceCents - (l.allocatedCents ?? 0));
+const lessonsWord = (n: number) => `${n} ${n === 1 ? 'μάθημα' : 'μαθήματα'}`;
 
 export default function PaymentDialog({
   defaults,
@@ -33,22 +38,25 @@ export default function PaymentDialog({
 }) {
   const toast = useToast();
   const [studentId, setStudentId] = useState<number | null>(defaults?.studentId ?? null);
-  const [lessons, setLessons] = useState<Lesson[] | null>(null);
+  const [mode, setMode] = useState<'lessons' | 'package'>(defaults?.mode ?? 'lessons');
+  const [lessons, setLessons] = useState<LessonWithPaid[] | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [amount, setAmount] = useState('');
   const [amountTouched, setAmountTouched] = useState(false);
+  const [shortfall, setShortfall] = useState<'discount' | 'oldest'>('discount');
+  const [packageSize, setPackageSize] = useState(10);
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const inRange = (l: Lesson) => (!defaults?.from || l.date >= defaults.from) && (!defaults?.to || l.date <= defaults.to);
+  const inRange = (l: LessonWithPaid) => (!defaults?.from || l.date >= defaults.from) && (!defaults?.to || l.date <= defaults.to);
   const hasRange = !!(defaults?.from || defaults?.to);
 
   useEffect(() => {
     if (!studentId) return;
     let cancelled = false;
-    api<Lesson[]>(`/api/lessons?studentId=${studentId}&unpaid=1`, 'GET')
+    api<LessonWithPaid[]>(`/api/lessons?studentId=${studentId}&unpaid=1`, 'GET')
       .then((list) => {
         if (cancelled) return;
         setLessons(list);
@@ -62,10 +70,14 @@ export default function PaymentDialog({
   }, [studentId, defaults?.from, defaults?.to]);
 
   const chosen = useMemo(() => (lessons ?? []).filter((l) => selected.has(l.id)), [lessons, selected]);
-  const sum = chosen.reduce((s, l) => s + l.priceCents, 0);
-  const amountCents = amountTouched ? parseMoney(amount) : sum;
-  const diff = amountCents === null ? 0 : amountCents - sum;
+  const chosenDue = chosen.reduce((s, l) => s + due(l), 0);
+  const isPackage = mode === 'package';
+  const amountCents = amountTouched || isPackage ? parseMoney(amount) : chosenDue;
+  const extra = !isPackage && amountCents !== null ? amountCents - chosenDue : 0;
+  const unticked = (lessons ?? []).filter((l) => !selected.has(l.id));
   const student = students.find((s) => s.id === studentId);
+  const perLesson = isPackage && amountCents && packageSize > 0 ? packageShare(amountCents, packageSize, 0) : 0;
+  const packageNow = Math.min(packageSize, lessons?.length ?? 0);
 
   function pickStudent(id: number) {
     if (id === studentId) return;
@@ -73,6 +85,13 @@ export default function PaymentDialog({
     setLessons(null);
     setSelected(new Set());
     setAmountTouched(false);
+  }
+
+  function switchMode(m: 'lessons' | 'package') {
+    setMode(m);
+    setAmountTouched(false);
+    setAmount('');
+    setError(null);
   }
 
   function toggle(id: number) {
@@ -84,18 +103,30 @@ export default function PaymentDialog({
     });
   }
 
-  const selectWhere = (pred: (l: Lesson) => boolean) => setSelected(new Set((lessons ?? []).filter(pred).map((l) => l.id)));
+  const selectWhere = (pred: (l: LessonWithPaid) => boolean) => setSelected(new Set((lessons ?? []).filter(pred).map((l) => l.id)));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!studentId) return setError('Επιλέξτε μαθητή');
-    if (chosen.length === 0) return setError('Επιλέξτε τουλάχιστον ένα μάθημα');
     if (amountCents === null || amountCents <= 0) return setError('Συμπληρώστε έγκυρο ποσό');
+    if (isPackage && (!packageSize || packageSize < 1)) return setError('Συμπληρώστε τον αριθμό μαθημάτων του πακέτου');
     setSaving(true);
     setError(null);
     try {
-      await api('/api/payments', 'POST', { studentId, amountCents, method, notes, lessonIds: chosen.map((l) => l.id) });
-      toast(`Καταχωρήθηκε πληρωμή ${formatMoney(amountCents, prefs.currency)} για ${chosen.length} ${chosen.length === 1 ? 'μάθημα' : 'μαθήματα'} 💸`);
+      const res = await api<PaymentResult>('/api/payments', 'POST', {
+        studentId,
+        amountCents,
+        method,
+        notes,
+        lessonIds: isPackage ? [] : chosen.map((l) => l.id),
+        shortfall,
+        lessonCount: isPackage ? packageSize : null,
+      });
+      const parts = [`Καταχωρήθηκαν ${formatMoney(amountCents, prefs.currency)}`];
+      if (res.lessonsPaid) parts.push(`εξοφλήθηκαν ${lessonsWord(res.lessonsPaid)}`);
+      if (res.credit.lessons) parts.push(`απομένουν ${lessonsWord(res.credit.lessons)} στο πακέτο`);
+      else if (res.credit.cents > 0) parts.push(`${formatMoney(res.credit.cents, prefs.currency)} προπληρωμή`);
+      toast(`${parts.join(' · ')} 💸`);
       onSaved();
       onClose();
     } catch (err) {
@@ -104,7 +135,9 @@ export default function PaymentDialog({
     }
   }
 
-  const active = students.filter((s) => !s.archived || s.id === studentId);
+  // Opened for a specific student (their page, their report row): show just them.
+  const active = defaults?.studentId ? students.filter((s) => s.id === defaults.studentId) : students.filter((s) => !s.archived || s.id === studentId);
+  const canSubmit = !!studentId && lessons !== null && amountCents !== null && amountCents > 0;
 
   return (
     <Modal
@@ -113,13 +146,10 @@ export default function PaymentDialog({
       title="Καταχώριση πληρωμής"
       footer={
         <>
-          <div className="mr-auto pl-1 text-sm text-base-content/60 tabular">
-            {chosen.length} {chosen.length === 1 ? 'μάθημα' : 'μαθήματα'}
-          </div>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
+          <button type="button" className="btn btn-ghost ml-auto" onClick={onClose}>
             Ακύρωση
           </button>
-          <button type="submit" form="payment-form" className="btn btn-success" disabled={saving || chosen.length === 0}>
+          <button type="submit" form="payment-form" className="btn btn-success" disabled={saving || !canSubmit}>
             {saving && <span className="loading loading-spinner loading-sm" />}
             Καταχώριση {amountCents !== null && amountCents > 0 ? formatMoney(amountCents, prefs.currency) : ''}
           </button>
@@ -150,11 +180,26 @@ export default function PaymentDialog({
           </div>
         </section>
 
-        {studentId && (
+        <div role="tablist" className="tabs tabs-box tabs-sm w-fit">
+          <button type="button" role="tab" className={`tab ${!isPackage ? 'tab-active' : ''}`} onClick={() => switchMode('lessons')}>
+            Πληρωμή / προπληρωμή
+          </button>
+          <button type="button" role="tab" className={`tab ${isPackage ? 'tab-active' : ''}`} onClick={() => switchMode('package')}>
+            Πακέτο μαθημάτων
+          </button>
+        </div>
+
+        {studentId && lessons === null && (
+          <div className="flex justify-center py-6">
+            <span className="loading loading-spinner text-primary" />
+          </div>
+        )}
+
+        {studentId && lessons !== null && !isPackage && (
           <section>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-medium">Απλήρωτα μαθήματα</span>
-              {lessons && lessons.length > 0 && (
+              {lessons.length > 0 && (
                 <div className="flex gap-1">
                   {hasRange && defaults?.from && (
                     <button type="button" className="btn btn-ghost btn-xs" onClick={() => selectWhere(inRange)}>
@@ -170,37 +215,27 @@ export default function PaymentDialog({
                 </div>
               )}
             </div>
-            {lessons === null ? (
-              <div className="flex justify-center py-6">
-                <span className="loading loading-spinner text-primary" />
-              </div>
-            ) : lessons.length === 0 ? (
-              <div className="flex flex-col items-center rounded-box bg-base-200 py-6 text-center">
-                <PartyPopper className="size-7 text-success" />
-                <p className="mt-2 font-semibold">Δεν υπάρχουν απλήρωτα μαθήματα</p>
-                <p className="text-sm text-base-content/55">{student?.name} τα έχει εξοφλήσει όλα.</p>
-              </div>
+            {lessons.length === 0 ? (
+              <p className="rounded-box bg-base-200 px-3 py-3 text-sm text-base-content/70">
+                {student?.name} δεν χρωστάει τίποτα. Το ποσό θα μείνει ως <b>προπληρωμή</b> και θα εξοφλεί αυτόματα τα επόμενα μαθήματα.
+              </p>
             ) : (
-              <ul className="max-h-64 divide-y divide-base-200 overflow-y-auto rounded-box border border-base-300">
+              <ul className="max-h-56 divide-y divide-base-200 overflow-y-auto rounded-box border border-base-300">
                 {lessons.map((l) => (
                   <li key={l.id}>
                     <label className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-base-200/60">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-success checkbox-sm"
-                        checked={selected.has(l.id)}
-                        onChange={() => toggle(l.id)}
-                      />
+                      <input type="checkbox" className="checkbox checkbox-success checkbox-sm" checked={selected.has(l.id)} onChange={() => toggle(l.id)} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-medium">
                           {shortDay(l.date)} · {l.startTime}
                         </span>
                         <span className="block text-xs text-base-content/55">
                           {l.durationMinutes}′{l.topic ? ` · ${l.topic}` : ''}
+                          {l.allocatedCents > 0 && ` · έχουν δοθεί ${formatMoney(l.allocatedCents, prefs.currency)}`}
                         </span>
                       </span>
                       <StatusBadge status={l.status} />
-                      <span className="w-20 text-right text-sm font-semibold tabular">{formatMoney(l.priceCents, prefs.currency)}</span>
+                      <span className="w-20 text-right text-sm font-semibold tabular">{formatMoney(due(l), prefs.currency)}</span>
                     </label>
                   </li>
                 ))}
@@ -209,16 +244,17 @@ export default function PaymentDialog({
           </section>
         )}
 
-        {lessons && lessons.length > 0 && (
+        {studentId && lessons !== null && (
           <>
-            <section>
+            <section className={isPackage ? 'grid grid-cols-2 gap-3' : ''}>
               <label className="block">
-                <span className="mb-1 block text-sm font-medium">Ποσό</span>
+                <span className="mb-1 block text-sm font-medium">{isPackage ? 'Τιμή πακέτου' : 'Ποσό'}</span>
                 <label className="input w-full">
                   <span className="text-base-content/50">{currencySymbol(prefs.currency)}</span>
                   <input
                     inputMode="decimal"
-                    value={amountTouched ? amount : centsToInput(sum)}
+                    placeholder={isPackage ? 'π.χ. 230' : '0'}
+                    value={amountTouched || isPackage ? amount : chosenDue ? centsToInput(chosenDue) : ''}
                     onChange={(e) => {
                       setAmountTouched(true);
                       setAmount(e.target.value);
@@ -226,17 +262,71 @@ export default function PaymentDialog({
                   />
                 </label>
               </label>
-              <p className="mt-1 text-xs text-base-content/55 tabular">
-                Σύνολο επιλεγμένων: {formatMoney(sum, prefs.currency)}
-                {diff < 0 && <span className="text-warning"> · έκπτωση {formatMoney(-diff, prefs.currency)}</span>}
-                {diff > 0 && <span className="text-info"> · επιπλέον {formatMoney(diff, prefs.currency)}</span>}
-                {amountTouched && (
-                  <button type="button" className="link link-primary ml-2 no-underline" onClick={() => setAmountTouched(false)}>
-                    ίσο με το σύνολο
-                  </button>
-                )}
-              </p>
+              {isPackage && (
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium">Αριθμός μαθημάτων</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    className="input w-full"
+                    value={packageSize || ''}
+                    onChange={(e) => setPackageSize(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                  />
+                </label>
+              )}
             </section>
+
+            {/* What will happen */}
+            {amountCents !== null && amountCents > 0 && (
+              <div className="flex gap-2 rounded-box bg-info/10 px-3 py-2.5 text-sm">
+                <Info className="mt-0.5 size-4 shrink-0 text-info" />
+                <div className="space-y-1">
+                  {isPackage ? (
+                    <>
+                      <p>
+                        <b>{formatMoney(perLesson, prefs.currency)}</b> ανά μάθημα.
+                      </p>
+                      <p>
+                        {packageNow > 0 && <>Εξοφλεί τώρα {lessonsWord(packageNow)} που χρωστάει (παλαιότερα πρώτα). </>}
+                        {packageSize - packageNow > 0 && <>Τα υπόλοιπα {packageSize - packageNow} θα χρησιμοποιηθούν αυτόματα στα επόμενα μαθήματα.</>}
+                      </p>
+                    </>
+                  ) : extra >= 0 ? (
+                    <>
+                      {chosen.length > 0 && <p>Εξοφλούνται {lessonsWord(chosen.length)} ({formatMoney(chosenDue, prefs.currency)}).</p>}
+                      {extra > 0 && (
+                        <p>
+                          <b>{formatMoney(extra, prefs.currency)}</b> μένουν ως προπληρωμή
+                          {unticked.length > 0 ? ' — πρώτα για τα μη επιλεγμένα απλήρωτα μαθήματα (παλαιότερα πρώτα), μετά για τα επόμενα.' : ' για τα επόμενα μαθήματα.'}
+                        </p>
+                      )}
+                      {amountTouched && (
+                        <button type="button" className="link link-primary text-xs no-underline" onClick={() => setAmountTouched(false)}>
+                          ίσο με το σύνολο
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p>Το ποσό είναι {formatMoney(-extra, prefs.currency)} λιγότερο από το σύνολο ({formatMoney(chosenDue, prefs.currency)}):</p>
+                      <label className="flex cursor-pointer items-start gap-2">
+                        <input type="radio" className="radio radio-xs radio-primary mt-1" checked={shortfall === 'discount'} onChange={() => setShortfall('discount')} />
+                        <span>
+                          <b>Έκπτωση</b> — εξοφλούνται όλα τα επιλεγμένα
+                        </span>
+                      </label>
+                      <label className="flex cursor-pointer items-start gap-2">
+                        <input type="radio" className="radio radio-xs radio-primary mt-1" checked={shortfall === 'oldest'} onChange={() => setShortfall('oldest')} />
+                        <span>
+                          <b>Μερική πληρωμή</b> — εξοφλούνται τα παλαιότερα, το υπόλοιπο μένει οφειλή
+                        </span>
+                      </label>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             <section>
               <span className="mb-2 block text-sm font-medium">Τρόπος πληρωμής</span>
@@ -256,7 +346,12 @@ export default function PaymentDialog({
 
             <label className="block">
               <span className="mb-1 block text-sm font-medium">Σημειώσεις</span>
-              <input className="input w-full" placeholder="π.χ. Πληρωμή Οκτωβρίου" value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <input
+                className="input w-full"
+                placeholder={isPackage ? 'π.χ. Πακέτο Οκτωβρίου' : 'π.χ. Σεπτέμβριος + προπληρωμή Οκτωβρίου'}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </label>
           </>
         )}

@@ -37,7 +37,7 @@ export default function Modal({
         </div>
         <div className="px-5 py-4">{children}</div>
         {footer && (
-          <div className="sticky bottom-0 flex items-center gap-2 border-t border-base-300 bg-base-100/90 px-5 py-3 backdrop-blur">
+          <div className="sticky bottom-0 flex items-center gap-2 border-t border-base-300 bg-base-100/90 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
             {footer}
           </div>
         )}

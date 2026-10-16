@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { BarChart3, ChevronLeft, ChevronRight, Clock3, Coins, Download, HandCoins, Percent, TrendingUp, Wallet } from 'lucide-react';
-import { listPayments } from '@/db/queries/payments';
+import { creditByStudent, listPayments } from '@/db/queries/payments';
 import { RecordPaymentButton } from '@/components/Actions';
 import PaymentsList from '@/components/PaymentsList';
 import { listLessons } from '@/db/queries/lessons';
@@ -26,11 +26,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   const from = period === 'month' ? startOfMonth(date) : startOfYear(date);
   const to = period === 'month' ? endOfMonth(date) : endOfYear(date);
-  const [students, yearLessons, periodPayments] = await Promise.all([
+  const [students, yearLessons, periodPayments, credits] = await Promise.all([
     listStudents(user.id),
     listLessons(user.id, { from: startOfYear(date), to: endOfYear(date) }),
     listPayments(user.id, { from, to }),
+    creditByStudent(user.id),
   ]);
+  const pendingCredit = [...credits.values()].reduce((s, c) => s + c.cents, 0);
   const lessons = yearLessons.filter((l) => l.date >= from && l.date <= to);
 
   const t = totals(lessons);
@@ -91,7 +93,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatTile icon={Clock3} label="Ώρες διδασκαλίας" value={formatHours(t.attendedMinutes)} hint={`${t.attended} μαθήματα με παρουσία`} />
         <StatTile icon={Coins} tone="secondary" label="Έσοδα" value={formatMoney(t.earnedCents, user.currency, { compact: true })} hint={`μαζί με ${t.noShow} χρεωμένες απουσίες`} />
-        <StatTile icon={HandCoins} tone="success" label="Εισπράχθηκαν" value={formatMoney(t.paidCents, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} σε εκκρεμότητα`} />
+        <StatTile icon={HandCoins} tone="success" label="Εισπράχθηκαν" value={formatMoney(t.paidCents, user.currency, { compact: true })} hint={`${formatMoney(t.outstandingCents, user.currency)} σε εκκρεμότητα${pendingCredit ? ` · ${formatMoney(pendingCredit, user.currency)} προπληρωμές σε αναμονή` : ''}`} />
         <StatTile icon={TrendingUp} tone="accent" label="Πραγματική χρέωση" value={perHour ? `${formatMoney(perHour, user.currency, { compact: true })}/ώρα` : '—'} hint={t.upcomingCents ? `${formatMoney(t.upcomingCents, user.currency)} ακόμη προγραμματισμένα` : 'ανά ώρα διδασκαλίας'} />
       </div>
 

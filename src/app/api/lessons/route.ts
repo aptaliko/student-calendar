@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createLessons, listLessons } from '@/db/queries/lessons';
 import { getStudent } from '@/db/queries/students';
-import { seriesDates } from '@/lib/lessons';
+import { MAX_SERIES_LESSONS, seriesDates, seriesDatesUntil } from '@/lib/lessons';
 import type { LessonStatus } from '@/db/schema';
 import { getUserId } from '@/lib/session';
 import { firstError, lessonCreateSchema } from '@/lib/validation';
@@ -26,16 +26,23 @@ export async function POST(request: NextRequest) {
   const userId = getUserId(request);
   const parsed = lessonCreateSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: firstError(parsed.error) }, { status: 400 });
-  const { repeatWeeks, ...lesson } = parsed.data;
+  const { repeatWeeks, repeatUntil, ...lesson } = parsed.data;
+  const dates = repeatUntil ? seriesDatesUntil(lesson.date, repeatUntil) : seriesDates(lesson.date, repeatWeeks);
+  if (dates.length === 0) {
+    return NextResponse.json({ error: 'Η ημερομηνία λήξης είναι πριν από το πρώτο μάθημα' }, { status: 400 });
+  }
+  if (dates.length > MAX_SERIES_LESSONS) {
+    return NextResponse.json({ error: `Έως ${MAX_SERIES_LESSONS} μαθήματα τη φορά` }, { status: 400 });
+  }
 
   if (!(await getStudent(userId, lesson.studentId))) {
     return NextResponse.json({ error: 'Ο μαθητής δεν βρέθηκε' }, { status: 404 });
   }
 
-  const seriesId = repeatWeeks > 1 ? randomUUID() : null;
+  const seriesId = dates.length > 1 ? randomUUID() : null;
   const created = await createLessons(
     userId,
-    seriesDates(lesson.date, repeatWeeks).map((date) => ({ ...lesson, date, seriesId })),
+    dates.map((date) => ({ ...lesson, date, seriesId })),
   );
   return NextResponse.json(created, { status: 201 });
 }

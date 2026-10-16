@@ -1,5 +1,6 @@
 import { listLessons } from '@/db/queries/lessons';
 import { listStudents } from '@/db/queries/students';
+import { creditByStudent } from '@/db/queries/payments';
 import { PageHeader } from '@/components/Card';
 import { NewStudentButton } from '@/components/Actions';
 import StudentsList from '@/components/StudentsList';
@@ -12,7 +13,7 @@ export const metadata = { title: 'Μαθητές' };
 export default async function StudentsPage() {
   const user = await requireUser();
   const today = todayIn(user.timezone);
-  const [students, lessons] = await Promise.all([listStudents(user.id), listLessons(user.id)]);
+  const [students, lessons, credits] = await Promise.all([listStudents(user.id), listLessons(user.id), creditByStudent(user.id)]);
 
   const all = totalsByStudent(lessons);
   const thisMonth = totalsByStudent(lessons.filter((l) => l.date >= startOfMonth(today) && l.date <= endOfMonth(today)));
@@ -27,6 +28,7 @@ export default async function StudentsPage() {
     student: s,
     monthMinutes: thisMonth.get(s.id)?.attendedMinutes ?? 0,
     outstandingCents: all.get(s.id)?.outstandingCents ?? 0,
+    creditCents: credits.get(s.id)?.cents ?? 0,
     attendanceRate: all.get(s.id)?.attendanceRate ?? null,
     next: nextLesson.get(s.id) ?? null,
   }));

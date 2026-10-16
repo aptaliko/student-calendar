@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, CalendarClock, Clock3, Coins, HandCoins, History, Mail, Percent, Phone, Wallet } from 'lucide-react';
 import { listStudentLessons } from '@/db/queries/lessons';
-import { listPayments } from '@/db/queries/payments';
+import { creditByStudent, listPayments } from '@/db/queries/payments';
 import PaymentsList from '@/components/PaymentsList';
 import { getStudent } from '@/db/queries/students';
 import Avatar from '@/components/Avatar';
@@ -22,10 +22,12 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   if (!student) notFound();
 
   const today = todayIn(user.timezone);
-  const [lessons, studentPayments] = await Promise.all([
+  const [lessons, studentPayments, credits] = await Promise.all([
     listStudentLessons(user.id, student.id), // newest first
     listPayments(user.id, { studentId: student.id }),
+    creditByStudent(user.id, student.id),
   ]);
+  const credit = credits.get(student.id);
   const t = totals(lessons);
   const upcoming = lessons.filter((l) => l.date >= today && l.status === 'scheduled').reverse();
   const past = lessons.filter((l) => !(l.date >= today && l.status === 'scheduled'));
@@ -83,6 +85,17 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
         />
         <StatTile icon={Wallet} tone="warning" label="Οφειλή" value={formatMoney(t.outstandingCents, user.currency, { compact: true })} hint={`${formatMoney(t.paidCents, user.currency)} πληρωμένα`} />
       </div>
+
+      {credit && (
+        <div className="alert alert-info alert-soft">
+          <HandCoins className="size-5" />
+          <span>
+            Προπληρωμή σε αναμονή: <b>{formatMoney(credit.cents, user.currency)}</b>
+            {credit.lessons > 0 && <> (πακέτο: απομένουν <b>{credit.lessons}</b> {credit.lessons === 1 ? 'μάθημα' : 'μαθήματα'})</>}. Εξοφλεί αυτόματα τα επόμενα
+            μαθήματα μόλις σημειωθούν «Παρών» ή «Απών».
+          </span>
+        </div>
+      )}
 
       {t.outstandingCents > 0 && (
         <div className="alert alert-warning alert-soft">
@@ -144,7 +157,12 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
             <HandCoins className="size-5 text-success" /> Πληρωμές
           </span>
         }
-        action={<RecordPaymentButton defaults={{ studentId: student.id }} className="btn btn-ghost btn-sm" label="Νέα πληρωμή" />}
+        action={
+          <div className="flex gap-1">
+            <RecordPaymentButton defaults={{ studentId: student.id }} className="btn btn-ghost btn-sm" label="Πληρωμή / προπληρωμή" />
+            <RecordPaymentButton defaults={{ studentId: student.id, mode: 'package' }} className="btn btn-ghost btn-sm" label="Πακέτο" />
+          </div>
+        }
       >
         <PaymentsList payments={studentPayments} showStudent={false} />
       </Card>

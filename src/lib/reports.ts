@@ -8,8 +8,8 @@ export type ReportLesson = {
   priceCents: number;
   status: LessonStatus;
   paid: boolean;
-  /** Share of a payment; null means the full price was paid (or the lesson is unpaid). */
-  paidCents?: number | null;
+  /** Paid towards it by recorded payments (can be partial, or less than the price after a discount). */
+  allocatedCents?: number;
 };
 
 export type Totals = {
@@ -21,7 +21,7 @@ export type Totals = {
   scheduled: number;
   attendedMinutes: number;
   earnedCents: number; // attended + no-show
-  paidCents: number; // actually received for these lessons (after any discount)
+  paidCents: number; // collected for these lessons: payments' shares, or full price if ticked paid by hand
   outstandingCents: number;
   upcomingCents: number; // still-scheduled lessons, not yet earned
   attendanceRate: number | null; // attended / (attended + no-show + excused)
@@ -66,9 +66,15 @@ function add(t: Totals, l: ReportLesson) {
       break;
   }
   if (isCharged(l.status)) {
+    const allocated = l.allocatedCents ?? 0;
     t.earnedCents += l.priceCents;
-    if (l.paid) t.paidCents += l.paidCents ?? l.priceCents;
-    else t.outstandingCents += l.priceCents;
+    if (l.paid) {
+      t.paidCents += allocated > 0 ? allocated : l.priceCents;
+    } else {
+      // partly paid from a prepayment that ran short: only the rest is still owed
+      t.paidCents += allocated;
+      t.outstandingCents += Math.max(0, l.priceCents - allocated);
+    }
   }
 }
 

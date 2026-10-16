@@ -84,7 +84,7 @@ export function Sidebar({ userName }: { userName: string }) {
 
 export function MobileHeader() {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-base-300 bg-base-100/80 px-4 py-3 backdrop-blur-lg lg:hidden">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-base-300 bg-base-100/80 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur-lg lg:hidden">
       <Link href="/">
         <Logo />
       </Link>

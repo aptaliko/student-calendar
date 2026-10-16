@@ -77,6 +77,22 @@
 body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   background: var(--color-base-200);
+  /* no grey flash on tap, no double-tap-to-zoom delay */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* iOS Safari zooms the page when a focused field's text is smaller than 16px. Only on iOS
+   (the -webkit-touch-callout check), so desktop keeps the compact sizes. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea,
+  .input,
+  .select,
+  .textarea {
+    font-size: max(16px, 1em) !important;
+  }
 }
 
 @utility brand-gradient {

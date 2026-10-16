@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { toCsv, totals, totalsByMonth, totalsByStudent, type ReportLesson } from './reports';
-import { seriesDates } from './lessons';
+import { seriesDates, seriesDatesUntil, MAX_SERIES_LESSONS } from './lessons';
 
 const L = (p: Partial<ReportLesson>): ReportLesson => ({
   studentId: 1,
@@ -29,11 +29,15 @@ describe('reports', () => {
     expect(t.attendanceRate).toBeCloseTo(1 / 3);
   });
 
-  it('counts a lesson\'s share of a discounted payment as collected', () => {
-    const t = totals([L({ paid: true, paidCents: 2000 }), L({ paid: true, paidCents: null }), L({ paid: false })]);
+  it('counts payment shares as collected, and only the rest of a partly paid lesson as owed', () => {
+    const t = totals([
+      L({ paid: true, allocatedCents: 2000 }), // paid at a discount
+      L({ paid: true }), // ticked paid by hand: full price
+      L({ paid: false, allocatedCents: 1000 }), // 10 € left from a prepayment
+    ]);
     expect(t.earnedCents).toBe(9000);
-    expect(t.paidCents).toBe(5000);
-    expect(t.outstandingCents).toBe(3000);
+    expect(t.paidCents).toBe(6000);
+    expect(t.outstandingCents).toBe(2000);
   });
 
   it('has no attendance rate before anything is marked', () => {
@@ -56,6 +60,19 @@ describe('reports', () => {
 
   it('escapes CSV cells', () => {
     expect(toCsv([['a,b', 'say "hi"', 3]])).toBe('"a,b","say ""hi""",3\n');
+  });
+
+  it('builds weekly series up to an end date, inclusive', () => {
+    expect(seriesDatesUntil('2026-10-06', '2026-10-20')).toEqual(['2026-10-06', '2026-10-13', '2026-10-20']);
+    expect(seriesDatesUntil('2026-10-06', '2026-10-19')).toEqual(['2026-10-06', '2026-10-13']);
+    expect(seriesDatesUntil('2026-10-06', '2026-10-06')).toEqual(['2026-10-06']);
+    expect(seriesDatesUntil('2026-10-06', '2026-10-01')).toEqual([]);
+    // Tuesday 6 Oct → end of year: every Tuesday, last one 29 Dec
+    const toYearEnd = seriesDatesUntil('2026-10-06', '2026-12-31');
+    expect(toYearEnd).toHaveLength(13);
+    expect(toYearEnd.at(-1)).toBe('2026-12-29');
+    // stops just past the cap so callers can reject oversized series
+    expect(seriesDatesUntil('2026-01-01', '2030-01-01').length).toBe(MAX_SERIES_LESSONS + 1);
   });
 
   it('builds weekly series dates', () => {

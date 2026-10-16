@@ -13,8 +13,10 @@ The interface is in Greek (Ημερολόγιο Μαθητών).
   profile page with stats, upcoming lessons and month-by-month history; archive or delete.
 - **Reports**: month / year, hours taught, income earned vs. collected, effective hourly rate,
   attendance breakdown, a 12-month income/hours chart, per-student table and **CSV export**.
-- **Payments**: record a lump-sum payment (e.g. at month end) by ticking the unpaid lessons
-  it covers; the amount can include a discount. Payment method, notes, and undo by deleting.
+- **Payments & prepayments**: record a lump-sum payment by ticking the unpaid lessons it covers
+  (a smaller amount can be a discount or a partial payment). Extra money becomes prepayment
+  that automatically pays the next lessons as they are marked. **Packages** ("10 lessons for
+  230 €") work the same way per lesson. Old unpaid lessons are always paid first.
 - **Settings**: name, timezone, currency, default rate and lesson length.
 - Light and dark themes (follows the OS), installable-feeling mobile layout with a bottom tab bar.
 

@@ -15,6 +15,7 @@ type Row = {
   student: Student;
   monthMinutes: number;
   outstandingCents: number;
+  creditCents: number;
   attendanceRate: number | null;
   next: string | null;
 };
@@ -27,17 +28,20 @@ const KIND_FILTERS: [KindFilter, string][] = [
   ['class', 'Τμήματα'],
 ];
 
+function matchesKind(student: Student, kindFilter: KindFilter): boolean {
+  return kindFilter === 'all' || student.kind === kindFilter;
+}
+
+function matchesQuery(student: Student, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  return !q || student.name.toLowerCase().includes(q) || !!student.email?.toLowerCase().includes(q);
+}
+
 function filterRows(
   rows: Row[],
   { query, showArchived, kindFilter }: { query: string; showArchived: boolean; kindFilter: KindFilter },
 ): Row[] {
-  const q = query.trim().toLowerCase();
-  return rows.filter(
-    (r) =>
-      r.student.archived === showArchived &&
-      (kindFilter === 'all' || r.student.kind === kindFilter) &&
-      (!q || r.student.name.toLowerCase().includes(q) || r.student.email?.toLowerCase().includes(q)),
-  );
+  return rows.filter((r) => r.student.archived === showArchived && matchesKind(r.student, kindFilter) && matchesQuery(r.student, query));
 }
 
 function KindFilterTabs({ value, onChange }: { value: KindFilter; onChange: (value: KindFilter) => void }) {
@@ -66,7 +70,7 @@ function ArchivedTabs({ showArchived, archivedCount, onChange }: { showArchived:
 }
 
 function StudentCard({ row, currency }: { row: Row; currency: Prefs['currency'] }) {
-  const { student: s, monthMinutes, outstandingCents, attendanceRate, next } = row;
+  const { student: s, monthMinutes, outstandingCents, creditCents, attendanceRate, next } = row;
   return (
     <Link href={`/students/${s.id}`} className="card-surface group flex flex-col gap-4 p-4 transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="flex items-center gap-3">
@@ -93,12 +97,19 @@ function StudentCard({ row, currency }: { row: Row; currency: Prefs['currency'] 
           <div className="font-bold tabular">{attendanceRate === null ? '—' : `${Math.round(attendanceRate * 100)}%`}</div>
           <div className="text-[11px] text-base-content/50">παρουσίες</div>
         </div>
-        <div>
-          <div className={`font-bold tabular ${outstandingCents > 0 ? 'text-warning' : ''}`}>
-            {formatMoney(outstandingCents, currency, { compact: true })}
+        {outstandingCents === 0 && creditCents > 0 ? (
+          <div>
+            <div className="font-bold text-info tabular">+{formatMoney(creditCents, currency, { compact: true })}</div>
+            <div className="text-[11px] text-base-content/50">προπληρωμή</div>
           </div>
-          <div className="text-[11px] text-base-content/50">οφειλή</div>
-        </div>
+        ) : (
+          <div>
+            <div className={`font-bold tabular ${outstandingCents > 0 ? 'text-warning' : ''}`}>
+              {formatMoney(outstandingCents, currency, { compact: true })}
+            </div>
+            <div className="text-[11px] text-base-content/50">οφειλή</div>
+          </div>
+        )}
       </div>
     </Link>
   );

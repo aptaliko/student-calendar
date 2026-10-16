@@ -1,5 +1,5 @@
 {
-  "id": "668cb500-4cd3-445c-9f98-249987f41701",
+  "id": "00d83269-ddc5-49ae-8b54-449ce8ba2c5c",
   "prevId": "143e3bb6-f73e-40a6-9b9b-e4612d59ccec",
   "version": "7",
   "dialect": "postgresql",
@@ -63,18 +63,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-        },
-        "payment_id": {
-          "name": "payment_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "paid_cents": {
-          "name": "paid_cents",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
         },
         "topic": {
           "name": "topic",
@@ -166,10 +154,79 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.payment_allocations": {
+      "name": "payment_allocations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
         },
-        "lessons_payment_id_payments_id_fk": {
-          "name": "lessons_payment_id_payments_id_fk",
-          "tableFrom": "lessons",
+        "payment_id": {
+          "name": "payment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "payment_allocations_payment_idx": {
+          "name": "payment_allocations_payment_idx",
+          "columns": [
+            {
+              "expression": "payment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payment_allocations_lesson_idx": {
+          "name": "payment_allocations_lesson_idx",
+          "columns": [
+            {
+              "expression": "lesson_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "payment_allocations_payment_id_payments_id_fk": {
+          "name": "payment_allocations_payment_id_payments_id_fk",
+          "tableFrom": "payment_allocations",
           "tableTo": "payments",
           "columnsFrom": [
             "payment_id"
@@ -177,7 +234,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payment_allocations_lesson_id_lessons_id_fk": {
+          "name": "payment_allocations_lesson_id_lessons_id_fk",
+          "tableFrom": "payment_allocations",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -221,6 +291,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'cash'"
+        },
+        "lesson_count": {
+          "name": "lesson_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "notes": {
           "name": "notes",
@@ -342,19 +418,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'violet'"
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'student'"
-        },
-        "school": {
-          "name": "school",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "hourly_rate_cents": {
           "name": "hourly_rate_cents",
