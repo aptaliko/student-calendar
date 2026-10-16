@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LESSON_STATUSES, PAYMENT_METHODS } from '@/db/schema';
+import { LESSON_STATUSES, PAYMENT_METHODS, STUDENT_KINDS, type StudentKind } from '@/db/schema';
 import { STUDENT_COLOR_NAMES } from './lessons';
 import { CURRENCIES } from './money';
 import { isValidISODate } from './dates';
@@ -20,11 +20,23 @@ export const studentSchema = z.object({
   email: optionalText,
   phone: optionalText,
   color: z.enum(STUDENT_COLOR_NAMES as [string, ...string[]]),
+  kind: z.enum(STUDENT_KINDS).default('student'),
+  school: optionalText,
   hourlyRateCents: cents,
   notes: optionalText,
 });
 
-export const studentPatchSchema = studentSchema.partial().extend({ archived: z.boolean().optional() });
+// `kind` is re-declared without the default: a PATCH that omits it must leave the stored kind alone.
+export const studentPatchSchema = studentSchema.partial().extend({
+  kind: z.enum(STUDENT_KINDS).optional(),
+  school: optionalText.optional(),
+  archived: z.boolean().optional(),
+});
+
+// The kind is chosen once, at creation. A PATCH may repeat it but not change it.
+export function kindChangeError(stored: StudentKind, requested: StudentKind | undefined): string | null {
+  return requested === undefined || requested === stored ? null : 'Το είδος δεν μπορεί να αλλάξει';
+}
 
 export const lessonSchema = z.object({
   studentId: z.number().int().positive(),
