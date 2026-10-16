@@ -33,7 +33,7 @@ export default async function StudentsPage() {
 
   return (
     <div className="animate-rise">
-      <PageHeader title="Μαθητές" subtitle={`${students.filter((s) => !s.archived).length} ενεργοί μαθητές`}>
+      <PageHeader title="Μαθητές και τμήματα" subtitle={`${students.filter((s) => !s.archived).length} ενεργοί μαθητές και τμήματα`}>
         <NewStudentButton />
       </PageHeader>
       <StudentsList rows={rows} />
