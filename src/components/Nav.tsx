@@ -8,7 +8,7 @@ import { useEditors } from './Editors';
 const LINKS = [
   { href: '/', label: 'Σήμερα', icon: LayoutDashboard },
   { href: '/calendar', label: 'Ημερολόγιο', icon: CalendarDays },
-  { href: '/students', label: 'Μαθητές', icon: Users },
+  { href: '/students', label: 'Μαθητές και τμήματα', icon: Users },
   { href: '/reports', label: 'Αναφορές', icon: BarChart3 },
 ];
 
