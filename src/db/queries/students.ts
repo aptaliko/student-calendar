@@ -2,7 +2,10 @@ import { and, asc, eq } from 'drizzle-orm';
 import { db } from '../client';
 import { students, type Student } from '../schema';
 
-export type StudentInput = Pick<Student, 'name' | 'email' | 'phone' | 'color' | 'hourlyRateCents' | 'notes'>;
+export type StudentInput = Pick<
+  Student,
+  'name' | 'email' | 'phone' | 'color' | 'hourlyRateCents' | 'notes' | 'kind' | 'school'
+>;
 
 export async function listStudents(ownerId: number): Promise<Student[]> {
   return db.select().from(students).where(eq(students.ownerId, ownerId)).orderBy(asc(students.name));
