@@ -36,6 +36,49 @@ const KIND_OPTIONS: { kind: StudentKind; label: string }[] = [
   { kind: 'class', label: 'Τμήμα' },
 ];
 
+// The kind can be picked at creation only; an existing row shows it locked.
+function KindTabs({ kind, locked, onChange }: { kind: StudentKind; locked: boolean; onChange: (kind: StudentKind) => void }) {
+  return (
+    <div role="tablist" className="tabs tabs-box w-full">
+      {KIND_OPTIONS.map((opt) => (
+        <button
+          key={opt.kind}
+          type="button"
+          role="tab"
+          aria-selected={kind === opt.kind}
+          className={`tab flex-1 ${kind === opt.kind ? 'tab-active' : ''}`}
+          disabled={locked}
+          onClick={() => onChange(opt.kind)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ColorPicker({ color, onChange }: { color: string; onChange: (color: string) => void }) {
+  return (
+    <div>
+      <span className="mb-2 block text-sm font-medium">Χρώμα στο ημερολόγιο</span>
+      <div className="flex flex-wrap gap-2">
+        {STUDENT_COLOR_NAMES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            aria-label={c}
+            aria-pressed={color === c}
+            className={`${STUDENT_COLORS[c].bg} grid size-9 place-items-center rounded-full text-white transition hover:scale-110 ${color === c ? 'ring-2 ring-base-content ring-offset-2 ring-offset-base-100' : ''}`}
+          >
+            {color === c && <Check className="size-4" />}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function StudentDialog({
   student,
   kind: initialKind = 'student',
@@ -65,6 +108,18 @@ export default function StudentDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // The kind is fixed once a row exists, so the PATCH body never carries it.
+  async function save(hourlyRateCents: number) {
+    const fields = { name, email, phone, color, hourlyRateCents, notes, school: isClass ? school : '' };
+    if (student) {
+      await api(`/api/students/${student.id}`, 'PATCH', fields);
+      toast(COPY[student.kind].updated);
+    } else {
+      await api('/api/students', 'POST', { ...fields, kind });
+      toast(`Προστέθηκε: ${name} 🎉`);
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const hourlyRateCents = parseMoney(rate);
@@ -72,23 +127,7 @@ export default function StudentDialog({
     setSaving(true);
     setError(null);
     try {
-      const fields = {
-        name,
-        email,
-        phone,
-        color,
-        hourlyRateCents,
-        notes,
-        school: isClass ? school : '',
-      };
-      // The kind is fixed once a row exists, so the PATCH body never carries it.
-      if (student) {
-        await api(`/api/students/${student.id}`, 'PATCH', fields);
-        toast(COPY[student.kind].updated);
-      } else {
-        await api('/api/students', 'POST', { ...fields, kind });
-        toast(`Προστέθηκε: ${name} 🎉`);
-      }
+      await save(hourlyRateCents);
       onSaved();
       onClose();
     } catch (err) {
@@ -115,21 +154,7 @@ export default function StudentDialog({
       }
     >
       <form id="student-form" onSubmit={submit} className="space-y-4">
-        <div role="tablist" className="tabs tabs-box w-full">
-          {KIND_OPTIONS.map((opt) => (
-            <button
-              key={opt.kind}
-              type="button"
-              role="tab"
-              aria-selected={kind === opt.kind}
-              className={`tab flex-1 ${kind === opt.kind ? 'tab-active' : ''}`}
-              disabled={!!student}
-              onClick={() => setKind(opt.kind)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <KindTabs kind={kind} locked={!!student} onChange={setKind} />
 
         <label className="floating-label block">
           <span>{copy.nameLabel}</span>
@@ -172,23 +197,7 @@ export default function StudentDialog({
           </label>
         </label>
 
-        <div>
-          <span className="mb-2 block text-sm font-medium">Χρώμα στο ημερολόγιο</span>
-          <div className="flex flex-wrap gap-2">
-            {STUDENT_COLOR_NAMES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                aria-label={c}
-                aria-pressed={color === c}
-                className={`${STUDENT_COLORS[c].bg} grid size-9 place-items-center rounded-full text-white transition hover:scale-110 ${color === c ? 'ring-2 ring-base-content ring-offset-2 ring-offset-base-100' : ''}`}
-              >
-                {color === c && <Check className="size-4" />}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ColorPicker color={color} onChange={setColor} />
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Σημειώσεις</span>
