@@ -14,6 +14,11 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+// A billable row is either a person ('student') or a class ('class', "Τμήμα"). Both are scheduled,
+// marked and paid the same way; the kind is chosen at creation and never changes.
+export const STUDENT_KINDS = ['student', 'class'] as const;
+export type StudentKind = (typeof STUDENT_KINDS)[number];
+
 export const students = pgTable(
   'students',
   {
@@ -23,6 +28,8 @@ export const students = pgTable(
     email: text('email'),
     phone: text('phone'),
     color: text('color').notNull().default('violet'),
+    kind: text('kind').$type<StudentKind>().notNull().default('student'),
+    school: text('school'),
     hourlyRateCents: integer('hourly_rate_cents').notNull(),
     notes: text('notes'),
     archived: boolean('archived').notNull().default(false),
