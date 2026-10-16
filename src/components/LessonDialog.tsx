@@ -176,6 +176,7 @@ export default function LessonDialog({
                   >
                     <Avatar name={s.name} color={s.color} size="sm" />
                     {s.name}
+                    {s.kind === 'class' && <span className="badge badge-outline badge-xs">Τμήμα</span>}
                   </button>
                 );
               })}
