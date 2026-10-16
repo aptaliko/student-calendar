@@ -28,7 +28,7 @@ export function NewLessonButton({
   );
 }
 
-export function NewStudentButton({ className = 'btn btn-primary', label = 'Προσθήκη μαθητή' }: { className?: string; label?: string }) {
+export function NewStudentButton({ className = 'btn btn-primary', label = 'Προσθήκη' }: { className?: string; label?: string }) {
   const { newStudent } = useEditors();
   return (
     <button className={className} onClick={newStudent}>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Check } from 'lucide-react';
-import type { Student } from '@/db/schema';
+import type { Student, StudentKind } from '@/db/schema';
 import { api } from '@/lib/api';
 import { STUDENT_COLOR_NAMES, STUDENT_COLORS } from '@/lib/lessons';
 import { centsToInput, parseMoney, currencySymbol } from '@/lib/money';
@@ -10,21 +10,53 @@ import Modal from './Modal';
 import { useToast } from './Toast';
 import type { Prefs } from './Editors';
 
+// All kind-specific copy lives here so the JSX reads the same for both kinds.
+const COPY: Record<
+  StudentKind,
+  { newTitle: string; editTitle: string; nameLabel: string; newSubmit: string; updated: string }
+> = {
+  student: {
+    newTitle: 'Νέος μαθητής',
+    editTitle: 'Επεξεργασία μαθητή',
+    nameLabel: 'Ονοματεπώνυμο',
+    newSubmit: 'Προσθήκη μαθητή',
+    updated: 'Ο μαθητής ενημερώθηκε',
+  },
+  class: {
+    newTitle: 'Νέο τμήμα',
+    editTitle: 'Επεξεργασία τμήματος',
+    nameLabel: 'Όνομα τμήματος',
+    newSubmit: 'Προσθήκη τμήματος',
+    updated: 'Το τμήμα ενημερώθηκε',
+  },
+};
+
+const KIND_OPTIONS: { kind: StudentKind; label: string }[] = [
+  { kind: 'student', label: 'Μαθητής' },
+  { kind: 'class', label: 'Τμήμα' },
+];
+
 export default function StudentDialog({
   student,
+  kind: initialKind = 'student',
   prefs,
   suggestedColor,
   onClose,
   onSaved,
 }: {
   student?: Student;
+  kind?: StudentKind;
   prefs: Prefs;
   suggestedColor: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const toast = useToast();
+  const [kind, setKind] = useState<StudentKind>(student?.kind ?? initialKind);
+  const copy = COPY[kind];
+  const isClass = kind === 'class';
   const [name, setName] = useState(student?.name ?? '');
+  const [school, setSchool] = useState(student?.school ?? '');
   const [email, setEmail] = useState(student?.email ?? '');
   const [phone, setPhone] = useState(student?.phone ?? '');
   const [rate, setRate] = useState(centsToInput(student?.hourlyRateCents ?? prefs.defaultRateCents));
@@ -40,10 +72,23 @@ export default function StudentDialog({
     setSaving(true);
     setError(null);
     try {
-      const body = { name, email, phone, color, hourlyRateCents, notes };
-      if (student) await api(`/api/students/${student.id}`, 'PATCH', body);
-      else await api('/api/students', 'POST', body);
-      toast(student ? 'Ο μαθητής ενημερώθηκε' : `Προστέθηκε: ${name} 🎉`);
+      const fields = {
+        name,
+        email,
+        phone,
+        color,
+        hourlyRateCents,
+        notes,
+        school: isClass ? school : '',
+      };
+      // The kind is fixed once a row exists, so the PATCH body never carries it.
+      if (student) {
+        await api(`/api/students/${student.id}`, 'PATCH', fields);
+        toast(COPY[student.kind].updated);
+      } else {
+        await api('/api/students', 'POST', { ...fields, kind });
+        toast(`Προστέθηκε: ${name} 🎉`);
+      }
       onSaved();
       onClose();
     } catch (err) {
@@ -56,7 +101,7 @@ export default function StudentDialog({
     <Modal
       open
       onClose={onClose}
-      title={student ? 'Επεξεργασία μαθητή' : 'Νέος μαθητής'}
+      title={student ? copy.editTitle : copy.newTitle}
       footer={
         <>
           <button type="button" className="btn btn-ghost ml-auto" onClick={onClose}>
@@ -64,17 +109,33 @@ export default function StudentDialog({
           </button>
           <button type="submit" form="student-form" className="btn btn-primary" disabled={saving}>
             {saving && <span className="loading loading-spinner loading-sm" />}
-            {student ? 'Αποθήκευση' : 'Προσθήκη μαθητή'}
+            {student ? 'Αποθήκευση' : copy.newSubmit}
           </button>
         </>
       }
     >
       <form id="student-form" onSubmit={submit} className="space-y-4">
+        <div role="tablist" className="tabs tabs-box w-full">
+          {KIND_OPTIONS.map((opt) => (
+            <button
+              key={opt.kind}
+              type="button"
+              role="tab"
+              aria-selected={kind === opt.kind}
+              className={`tab flex-1 ${kind === opt.kind ? 'tab-active' : ''}`}
+              disabled={!!student}
+              onClick={() => setKind(opt.kind)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         <label className="floating-label block">
-          <span>Ονοματεπώνυμο</span>
+          <span>{copy.nameLabel}</span>
           <input
             className="input input-lg w-full"
-            placeholder="Ονοματεπώνυμο"
+            placeholder={copy.nameLabel}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -82,16 +143,25 @@ export default function StudentDialog({
           />
         </label>
 
-        <div className="grid grid-cols-2 gap-3">
+        {isClass && (
           <label className="floating-label block">
-            <span>Email</span>
-            <input type="email" className="input w-full" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <span>Σχολείο</span>
+            <input className="input w-full" placeholder="Σχολείο" value={school} onChange={(e) => setSchool(e.target.value)} />
           </label>
-          <label className="floating-label block">
-            <span>Τηλέφωνο</span>
-            <input type="tel" className="input w-full" placeholder="Τηλέφωνο" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </label>
-        </div>
+        )}
+
+        {!isClass && (
+          <div className="grid grid-cols-2 gap-3">
+            <label className="floating-label block">
+              <span>Email</span>
+              <input type="email" className="input w-full" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            <label className="floating-label block">
+              <span>Τηλέφωνο</span>
+              <input type="tel" className="input w-full" placeholder="Τηλέφωνο" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </label>
+          </div>
+        )}
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Ωριαία χρέωση</span>
