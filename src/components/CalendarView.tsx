@@ -15,6 +15,7 @@ import {
   shortDay,
   WEEKDAY_SHORT,
 } from '@/lib/dates';
+import { holidaysBetween } from '@/lib/holidays';
 import { STATUS_META, colorOf } from '@/lib/lessons';
 import { formatMoney } from '@/lib/money';
 import { useEditors } from './Editors';
@@ -34,6 +35,7 @@ export default function CalendarView({ view, date, today, days, lessons }: Props
     for (const l of visible) m.set(l.date, [...(m.get(l.date) ?? []), l]);
     return m;
   }, [visible]);
+  const holidays = useMemo(() => holidaysBetween(days[0], days[days.length - 1]), [days]);
 
   const prev = view === 'month' ? addMonths(date, -1) : addDays(date, -7);
   const next = view === 'month' ? addMonths(date, 1) : addDays(date, 7);
@@ -103,9 +105,9 @@ export default function CalendarView({ view, date, today, days, lessons }: Props
       )}
 
       {view === 'month' ? (
-        <MonthView key={date.slice(0, 7)} date={date} today={today} days={days} byDate={byDate} />
+        <MonthView key={date.slice(0, 7)} date={date} today={today} days={days} byDate={byDate} holidays={holidays} />
       ) : (
-        <WeekView today={today} days={days} byDate={byDate} />
+        <WeekView today={today} days={days} byDate={byDate} holidays={holidays} />
       )}
     </div>
   );
@@ -137,12 +139,27 @@ function Pill({ lesson }: { lesson: Lesson }) {
   );
 }
 
-function MonthView({ date, today, days, byDate }: { date: string; today: string; days: string[]; byDate: Map<string, Lesson[]> }) {
+type Holidays = Map<string, string>;
+
+function MonthView({
+  date,
+  today,
+  days,
+  byDate,
+  holidays,
+}: {
+  date: string;
+  today: string;
+  days: string[];
+  byDate: Map<string, Lesson[]>;
+  holidays: Holidays;
+}) {
   const { newLesson } = useEditors();
   const studentById = useStudentMap();
   const month = date.slice(0, 7);
   const [selected, setSelected] = useState(today.slice(0, 7) === month ? today : `${month}-01`);
   const selectedLessons = byDate.get(selected) ?? [];
+  const selectedHoliday = holidays.get(selected);
   return (
     <>
       <div className="card-surface overflow-hidden">
@@ -159,6 +176,7 @@ function MonthView({ date, today, days, byDate }: { date: string; today: string;
             const list = byDate.get(d) ?? [];
             const isToday = d === today;
             const isSelected = d === selected;
+            const holiday = holidays.get(d);
             return (
               <div
                 key={d}
@@ -173,13 +191,18 @@ function MonthView({ date, today, days, byDate }: { date: string; today: string;
                 <div className="flex items-center justify-between">
                   <span
                     className={`grid size-6 place-items-center rounded-full text-xs font-semibold sm:size-7 sm:text-sm ${
-                      isToday ? 'brand-gradient text-white shadow' : inMonth ? '' : 'text-base-content/35'
+                      isToday ? 'brand-gradient text-white shadow' : holiday ? 'text-error' : inMonth ? '' : 'text-base-content/35'
                     }`}
                   >
                     {Number(d.slice(8))}
                   </span>
                   <Plus className="hidden size-4 text-primary opacity-0 transition group-hover:opacity-100 sm:block" />
                 </div>
+                {holiday && (
+                  <div className="hidden truncate px-0.5 text-[11px] font-medium text-error sm:block" title={holiday}>
+                    {holiday}
+                  </div>
+                )}
                 {/* Phones: dots. Larger screens: pills. */}
                 <div className="mt-1 flex flex-wrap justify-center gap-0.5 sm:hidden">
                   {list.slice(0, 4).map((l) => (
@@ -208,6 +231,7 @@ function MonthView({ date, today, days, byDate }: { date: string; today: string;
             <Plus className="size-4" /> Προσθήκη
           </button>
         </div>
+        {selectedHoliday && <p className="px-3 pb-1 text-xs font-medium text-error">{selectedHoliday}</p>}
         {selectedLessons.length === 0 ? (
           <p className="px-3 pb-4 text-sm text-base-content/50">Κανένα μάθημα.</p>
         ) : (
@@ -222,7 +246,7 @@ function MonthView({ date, today, days, byDate }: { date: string; today: string;
   );
 }
 
-function WeekView({ today, days, byDate }: { today: string; days: string[]; byDate: Map<string, Lesson[]> }) {
+function WeekView({ today, days, byDate, holidays }: { today: string; days: string[]; byDate: Map<string, Lesson[]>; holidays: Holidays }) {
   const { newLesson, editLesson } = useEditors();
   const studentById = useStudentMap();
   const all = days.flatMap((d) => byDate.get(d) ?? []);
@@ -236,6 +260,7 @@ function WeekView({ today, days, byDate }: { today: string; days: string[]; byDa
       <div className="space-y-3 sm:hidden">
         {days.map((d) => {
           const list = byDate.get(d) ?? [];
+          const holiday = holidays.get(d);
           return (
             <div key={d} className={`card-surface p-2 ${d === today ? 'ring-2 ring-primary/40' : ''}`}>
               <div className="flex items-center justify-between px-3 pt-1">
@@ -244,6 +269,7 @@ function WeekView({ today, days, byDate }: { today: string; days: string[]; byDa
                   <Plus className="size-4" />
                 </button>
               </div>
+              {holiday && <p className="px-3 text-xs font-medium text-error">{holiday}</p>}
               {list.length === 0 ? (
                 <p className="px-3 pb-2 text-sm text-base-content/40">Ελεύθερη</p>
               ) : (
@@ -262,16 +288,26 @@ function WeekView({ today, days, byDate }: { today: string; days: string[]; byDa
       <div className="card-surface hidden overflow-hidden sm:block">
         <div className="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-base-300 bg-base-200/50">
           <div />
-          {days.map((d, i) => (
-            <div key={d} className="py-2 text-center">
-              <div className="text-xs font-semibold tracking-wide text-base-content/50 uppercase">{WEEKDAY_SHORT[i]}</div>
-              <div
-                className={`mx-auto mt-0.5 grid size-8 place-items-center rounded-full text-sm font-bold ${d === today ? 'brand-gradient text-white shadow' : ''}`}
-              >
-                {Number(d.slice(8))}
+          {days.map((d, i) => {
+            const holiday = holidays.get(d);
+            return (
+              <div key={d} className="px-1 py-2 text-center">
+                <div className="text-xs font-semibold tracking-wide text-base-content/50 uppercase">{WEEKDAY_SHORT[i]}</div>
+                <div
+                  className={`mx-auto mt-0.5 grid size-8 place-items-center rounded-full text-sm font-bold ${
+                    d === today ? 'brand-gradient text-white shadow' : holiday ? 'text-error' : ''
+                  }`}
+                >
+                  {Number(d.slice(8))}
+                </div>
+                {holiday && (
+                  <div className="mt-0.5 truncate text-[10px] font-medium text-error" title={holiday}>
+                    {holiday}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="max-h-[70dvh] overflow-y-auto">
           <div className="relative grid grid-cols-[3.5rem_repeat(7,1fr)]">
@@ -283,7 +319,10 @@ function WeekView({ today, days, byDate }: { today: string; days: string[]; byDa
               ))}
             </div>
             {days.map((d) => (
-              <div key={d} className={`relative border-l border-base-300 ${d === today ? 'bg-primary/[0.03]' : ''}`}>
+              <div
+                key={d}
+                className={`relative border-l border-base-300 ${d === today ? 'bg-primary/[0.03]' : holidays.has(d) ? 'bg-error/[0.03]' : ''}`}
+              >
                 {hours.map((h) => (
                   <button
                     key={h}
