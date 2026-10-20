@@ -87,6 +87,9 @@ export const lessons = pgTable(
     paid: boolean('paid').notNull().default(false),
     topic: text('topic'),
     notes: text('notes'),
+    // What was covered in this lesson, and what the next one should aim for.
+    material: text('material'),
+    nextGoal: text('next_goal'),
     // Shared by lessons created together as a weekly series.
     seriesId: text('series_id'),
     createdAt: timestamp('created_at').notNull().defaultNow(),

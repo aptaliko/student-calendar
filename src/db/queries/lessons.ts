@@ -19,7 +19,7 @@ const withAllocated = {
 
 export type LessonInput = Pick<
   Lesson,
-  'studentId' | 'date' | 'startTime' | 'durationMinutes' | 'priceCents' | 'topic' | 'notes'
+  'studentId' | 'date' | 'startTime' | 'durationMinutes' | 'priceCents' | 'topic' | 'notes' | 'material' | 'nextGoal'
 > & { status?: LessonStatus; paid?: boolean; seriesId?: string | null };
 
 export async function listLessons(

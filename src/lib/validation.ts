@@ -48,6 +48,8 @@ export const lessonSchema = z.object({
   paid: z.boolean().optional(),
   topic: optionalText,
   notes: optionalText,
+  material: optionalText,
+  nextGoal: optionalText,
 });
 
 export const lessonCreateSchema = lessonSchema.extend({

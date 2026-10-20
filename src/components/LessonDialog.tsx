@@ -50,6 +50,8 @@ export default function LessonDialog({
   const [paid, setPaid] = useState(lesson?.paid ?? false);
   const [topic, setTopic] = useState(lesson?.topic ?? '');
   const [notes, setNotes] = useState(lesson?.notes ?? '');
+  const [material, setMaterial] = useState(lesson?.material ?? '');
+  const [nextGoal, setNextGoal] = useState(lesson?.nextGoal ?? '');
   const [repeat, setRepeat] = useState(false);
   const [weeks, setWeeks] = useState(8);
   const [repeatMode, setRepeatMode] = useState<'until' | 'count'>('until');
@@ -85,6 +87,8 @@ export default function LessonDialog({
       paid: charged && paid,
       topic,
       notes,
+      material,
+      nextGoal,
     };
     try {
       if (lesson) {
@@ -374,6 +378,14 @@ export default function LessonDialog({
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Σημειώσεις</span>
             <textarea className="textarea w-full" rows={2} placeholder="Εργασίες, πρόοδος…" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Ύλη μαθήματος</span>
+            <textarea className="textarea w-full" rows={2} placeholder="Τι διδάχθηκε σήμερα…" value={material} onChange={(e) => setMaterial(e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Στόχος επόμενου μαθήματος</span>
+            <textarea className="textarea w-full" rows={2} placeholder="Τι θέλουμε να καλύψουμε την επόμενη φορά…" value={nextGoal} onChange={(e) => setNextGoal(e.target.value)} />
           </label>
         </section>
 
